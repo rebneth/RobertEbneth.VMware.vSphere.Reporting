@@ -58,7 +58,7 @@ Process {
 		    break
         }
 
-        $AllHosts = get-cluster $cluster | get-vmhost | Sort-Object Name
+        $AllHosts = get-cluster $cluster | get-vmhost | Where { $_.PowerState -eq "PoweredOn"} | Sort-Object Name
         $ALLClusterHostScsiLuns = get-cluster $cluster | get-vmhost | Get-ScsiLun -LunType disk | ?{$_.IsLocal -eq $false } | Sort-Object CanonicalName
         ForEach ($VMHost in $AllHosts) {
             Write-Host "Collecting Storage Multipathing information for ESXi host $($VMHost.Name)..."
@@ -147,8 +147,8 @@ End {
 # SIG # Begin signature block
 # MIIFmgYJKoZIhvcNAQcCoIIFizCCBYcCAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQU/NV+rlEA7HnD5hB5Qe9y5/II
-# D3agggMmMIIDIjCCAgqgAwIBAgIQPWSBWJqOxopPvpSTqq3wczANBgkqhkiG9w0B
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUd5jP+QiLO2oXYDwdObyGfTHy
+# Ss+gggMmMIIDIjCCAgqgAwIBAgIQPWSBWJqOxopPvpSTqq3wczANBgkqhkiG9w0B
 # AQUFADApMScwJQYDVQQDDB5Sb2JlcnRFYm5ldGhJVFN5c3RlbUNvbnN1bHRpbmcw
 # HhcNMTcwMjA0MTI0NjQ5WhcNMjIwMjA1MTI0NjQ5WjApMScwJQYDVQQDDB5Sb2Jl
 # cnRFYm5ldGhJVFN5c3RlbUNvbnN1bHRpbmcwggEiMA0GCSqGSIb3DQEBAQUAA4IB
@@ -168,11 +168,11 @@ End {
 # MIIB2gIBATA9MCkxJzAlBgNVBAMMHlJvYmVydEVibmV0aElUU3lzdGVtQ29uc3Vs
 # dGluZwIQPWSBWJqOxopPvpSTqq3wczAJBgUrDgMCGgUAoHgwGAYKKwYBBAGCNwIB
 # DDEKMAigAoAAoQKAADAZBgkqhkiG9w0BCQMxDAYKKwYBBAGCNwIBBDAcBgorBgEE
-# AYI3AgELMQ4wDAYKKwYBBAGCNwIBFTAjBgkqhkiG9w0BCQQxFgQUfF3sGDvpCgDa
-# DnouaYNxXoF+ztwwDQYJKoZIhvcNAQEBBQAEggEADrgClExO0Z6H5i0acHnlG9FI
-# iDgEqmip2fneEtW0VvqWrPEdwv9dOb0nqnD9iPtVNdWPz0MB4VB3LgB6yR0Sv/tG
-# iko0BEfLH5p2TfpFZb4vElPGC4JtRiQkxIlgWNTderTQJ2Z8cDXIbAi9jZb4Szbd
-# aSlaE411x6Pmcg/wjo8gI6XfW4pZTQA9MORE1/Z28/OrwnS+HxE8KRNY4/pmK9YD
-# FcNOECRoLfQQrjTr9blmOMh6wW2eXCn9n6P6HQhxgXvW23wYjDG8eoeSvIhOASfc
-# qfUmt4H8AxpOAuoLr+o2ZyXAGB9sk1TK/SYeWOuinHyuHHC7P/fu5SRR5y/GNA==
+# AYI3AgELMQ4wDAYKKwYBBAGCNwIBFTAjBgkqhkiG9w0BCQQxFgQU5OuVmDFKF2FB
+# zpCBoVRUAxBrglMwDQYJKoZIhvcNAQEBBQAEggEAmDyAcYFVpdJDd++pEA+UYlPb
+# HW1MG4RH1llV91lPYO1afabWbfEmDYIFZxqI7ruiaJ9H9zihsFawP1D1JeKcJw7F
+# o5quz+a5rhPlNJrw/rUXsKQQjcpgojEkD5+E2nFkkLe03lxwJviV4RGSuH/qtwhr
+# +JxdWa5PsfgJnbrLMWOVsfUvCA6qjWUg0y3dvVmHT+16ko1mptJaY5EOkRVoXS39
+# LmR6t/lV4fM+bD/LQCN0Vvxb42OGYgfceVZl/BESKxY9pHckiRgWMAugnVPRFsJW
+# gAPs49sOJVK2j9DimvCqeAHzZJT9yproIhMLUP1wxQZLNr3vJfpIFPWSZcuWcg==
 # SIG # End signature block
