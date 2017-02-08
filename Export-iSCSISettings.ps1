@@ -77,7 +77,7 @@ Process {
             foreach ($target in $StaticTargets) {
                 $StaticTargetString = "$($StaticTargetString)$($target.Address):$($target.Port)"
                 if ( $tgtcount -lt $StaticTargets.Length ) { $StaticTargetString = $StaticTargetString + ";"} $tgtcount++ }
-            $AdvancedOptions = $hba.ExtensionData.AdvancedOptions
+            $AdvancedOptions = $iscsi_hba.ExtensionData.AdvancedOptions
             $DelayedAck = $AdvancedOptions | ?{$_.Key -eq "DelayedAck" } | Select-Object -ExpandProperty Value
 			$LoginTimeout = $AdvancedOptions | ?{$_.Key -eq "LoginTimeout" } | Select-Object -ExpandProperty Value
 			$NoopTimeout = $AdvancedOptions | ?{$_.Key -eq "NoopTimeout" } | Select-Object -ExpandProperty Value
@@ -151,8 +151,8 @@ End {
 # SIG # Begin signature block
 # MIIFmgYJKoZIhvcNAQcCoIIFizCCBYcCAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUuA7T1tonAwM4vvT9/ZJiU8A0
-# bwSgggMmMIIDIjCCAgqgAwIBAgIQPWSBWJqOxopPvpSTqq3wczANBgkqhkiG9w0B
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUHrrHeb0lr2WtyLLFlGmWeG0h
+# 8SCgggMmMIIDIjCCAgqgAwIBAgIQPWSBWJqOxopPvpSTqq3wczANBgkqhkiG9w0B
 # AQUFADApMScwJQYDVQQDDB5Sb2JlcnRFYm5ldGhJVFN5c3RlbUNvbnN1bHRpbmcw
 # HhcNMTcwMjA0MTI0NjQ5WhcNMjIwMjA1MTI0NjQ5WjApMScwJQYDVQQDDB5Sb2Jl
 # cnRFYm5ldGhJVFN5c3RlbUNvbnN1bHRpbmcwggEiMA0GCSqGSIb3DQEBAQUAA4IB
@@ -172,11 +172,11 @@ End {
 # MIIB2gIBATA9MCkxJzAlBgNVBAMMHlJvYmVydEVibmV0aElUU3lzdGVtQ29uc3Vs
 # dGluZwIQPWSBWJqOxopPvpSTqq3wczAJBgUrDgMCGgUAoHgwGAYKKwYBBAGCNwIB
 # DDEKMAigAoAAoQKAADAZBgkqhkiG9w0BCQMxDAYKKwYBBAGCNwIBBDAcBgorBgEE
-# AYI3AgELMQ4wDAYKKwYBBAGCNwIBFTAjBgkqhkiG9w0BCQQxFgQUXDWHzAtQY3wh
-# GttdFY37jaXhbD4wDQYJKoZIhvcNAQEBBQAEggEAP01u7Z9Rw+10Iv+xgProEKq4
-# nArdmCSowZdnSJ5YBWEUjyzF9kcrTUS/wXY+nl6nX0XhPQ8lp2ScalW0pAopaVEe
-# KwLY7CbpoBsZUBEpz2j+zqRgno0MTldzWKaX8zwXSvb8nsahSYC5R94UFE7vHeWB
-# BEhKhl8w+pl4x3ml+1Y8Yi2Pr669kvFyk3MKAfSxR2KpNaxSPVp0ME+SgJuzsf/c
-# z5vjmrooIfBpTDnnHVXK05QJA8DioJLVYSUqe0qxXja+mx1UcmyAGV++lKuBgTQ3
-# RPqRpQ71abFDTJWvPP+Mig4iwZYaM3kVLZHbXSBdSXHhlDGofedyBQ/45j2Czw==
+# AYI3AgELMQ4wDAYKKwYBBAGCNwIBFTAjBgkqhkiG9w0BCQQxFgQUAjN3Lw8hX26G
+# IsY+VEy8JF20kn8wDQYJKoZIhvcNAQEBBQAEggEAFXf5m7dUIlGVJ3laqwNZy0Q2
+# abLOhve6S+NSqn9FWLElh8bXSRetKau0ipUUHAuQbg5u6QrS/pZ8QAaKGmAdyODK
+# KbCu5ZowEN+kU5vbGbgB4H+TWIsyT9IFwutdvdfqZoGEg7fTUAyNieQDmKLulvYj
+# ++GugsCBSUX/yUcdaWb9uFwYarLvuVHOnegt4zHP8IDqldQ0bX2Uv2jhfv8Ms8W5
+# Lg31g87cRJ+Bjt6YOpNdYjrQZldeM2+Q5pIV96fMSzX700lv7XLXoyhysIeiIIr2
+# Z7LgpPz9ohKogWb8VoB3iil7Pu9n9c34t+IqsbFgMXL/5Wf1HmzcLok5Bq7XXg==
 # SIG # End signature block
