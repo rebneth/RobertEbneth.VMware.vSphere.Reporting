@@ -7,7 +7,7 @@
 .NOTES
   Release 1.1
   Robert Ebneth
-  February, 4th, 2017
+  February, 9th, 2017
 .LINK
   http://github.com/rebneth/RobertEbneth.VMware.vSphere.Reporting
 .PARAMETER Filename
@@ -59,7 +59,7 @@ Begin {
     Write-Host ""
 
 	# vCenter information
-	$vCInfo = "" | Select VCversion, VCBuild, Datacentername, Clustername, HostName, ESXiEdition, ESXiVersion, ESXiBuild, HostManufacturer, HostModell, HostBiosVersion, HostBiosReleaseDate, ProcessorType, NumCpus, NumCpuCores, NumCpuThreads, CpuTotalMhz, CpuUsageMhz, CpuUsagePCT, MemoryTotalGB, MemoryUsageGB, MemoryUsagePCT, HBA_String, LicenseKey, CpuPowerManagementCurrentPolicy, ConnectionState, PowerState, BootTime
+	$vCInfo = "" | Select VCversion, VCBuild, Datacentername, Clustername, HostName, ESXiEdition, ESXiVersion, ESXiBuild, HostManufacturer, HostModell, HostBiosVersion, HostBiosReleaseDate, ProcessorType, NumCpus, NumCpuCores, NumCpuThreads, CpuTotalMhz, CpuUsageMhz, CpuUsagePCT, MemoryTotalGB, VMMemoryAssignedGB, OverCommitGB, MemoryUsageGB, MemoryUsagePCT, HBA_String, LicenseKey, CpuPowerManagementCurrentPolicy, ConnectionState, PowerState, BootTime
 	$vCInfo.VCversion = $vcversion
 	$vCInfo.VCBuild = $vcbuild
 	# head line info for each vCenter
@@ -77,8 +77,9 @@ Process {
       # 2nd level loop: for each Cluster in Datacenter
 	  FOREACH ($VMcluster in Get-Datacenter $DataCenter.Name | Get-Cluster | Sort-Object Name) {
 		# 3rd level loop: for each esxi host in cluster
-		FOREACH ($vmhost in (get-cluster $VMcluster | get-vmhost | Sort-Object Name)) {	
-			$HostInfo = "" | Select VCversion, VCBuild, Datacentername, Clustername, HostName, ESXiEdition, ESXiVersion, ESXiBuild, HostManufacturer, HostModell, HostBiosVersion, HostBiosReleaseDate, ProcessorType, NumCpus, NumCpuCores, NumCpuThreads, CpuTotalMhz, CpuUsageMhz, CpuUsagePCT, MemoryTotalGB, MemoryUsageGB, MemoryUsagePCT, HBA_String, LicenseKey, CpuPowerManagementCurrentPolicy, ConnectionState, PowerState, BootTime
+		FOREACH ($vmhost in (get-cluster $VMcluster | get-vmhost | Sort-Object Name)) {
+            Write-Host "Collecting information for ESXi host $($VMHost.Name)..."	
+			$HostInfo = "" | Select VCversion, VCBuild, Datacentername, Clustername, HostName, ESXiEdition, ESXiVersion, ESXiBuild, HostManufacturer, HostModell, HostBiosVersion, HostBiosReleaseDate, ProcessorType, NumCpus, NumCpuCores, NumCpuThreads, CpuTotalMhz, CpuUsageMhz, CpuUsagePCT, MemoryTotalGB, VMMemoryAssignedGB, OverCommitGB, MemoryUsageGB, MemoryUsagePCT, HBA_String, LicenseKey, CpuPowerManagementCurrentPolicy, ConnectionState, PowerState, BootTime
 			$HostInfo.VCVersion = $vcversion
 			$HostInfo.VCBuild = $vcbuild
 			$HostInfo.Datacentername = $DataCenter.Name
@@ -107,7 +108,13 @@ Process {
 				$HostInfo.CpuUsageMhz = $vmhost.CpuUsageMhz
 				[decimal]$PCT = [math]::round(($($HostInfo.CpuUsageMhz)/$($vmhost.CpuTotalMhz)), 2)
 				$HostInfo.CpuUsagePCT = "{0:P0}" -f $PCT
-				$HostInfo.MemoryTotalGB = ([decimal]::round($vmhost.MemoryTotalGB))
+				$HostInfo.MemoryTotalGB = ([decimal]::round($vmhost.MemoryTotalGB))               
+                if ($VMMem) { Clear-Variable VMMem }
+                $VM = Get-VMHost -Name $vmhost | Get-VM
+                $VM | ?{$_.VMHost.Name -eq $VMHost.Name} | Foreach { [INT]$VMMem += $_.MemoryMB	}
+                $HostInfo.VMMemoryAssignedGB = [Math]::Round(($VMMem/1024), 0)
+                If ([Math]::Round(($VMMem - $VMHost.MemoryTotalMB), 0) -gt 0) {
+                     $HostInfo.OverCommitGB = [Math]::Round((($VMMem - $VMHost.MemoryTotalMB)/1024), 0)}
 				$HostInfo.MemoryUsageGB = ([decimal]::round($vmhost.MemoryUsageGB))
 				[decimal]$PCT = [math]::round(($($vmhost.MemoryUsageGB)/$($vmhost.MemoryTotalGB)), 2)
 				$HostInfo.MemoryUsagePCT = "{0:P0}" -f $PCT
@@ -137,8 +144,8 @@ End {
 # SIG # Begin signature block
 # MIIFmgYJKoZIhvcNAQcCoIIFizCCBYcCAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUH/F2Xjcy05Z5NG1DqEuvxDqF
-# HU2gggMmMIIDIjCCAgqgAwIBAgIQPWSBWJqOxopPvpSTqq3wczANBgkqhkiG9w0B
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUXRhHP99rbI7GQsmPSdXGgQTs
+# f1WgggMmMIIDIjCCAgqgAwIBAgIQPWSBWJqOxopPvpSTqq3wczANBgkqhkiG9w0B
 # AQUFADApMScwJQYDVQQDDB5Sb2JlcnRFYm5ldGhJVFN5c3RlbUNvbnN1bHRpbmcw
 # HhcNMTcwMjA0MTI0NjQ5WhcNMjIwMjA1MTI0NjQ5WjApMScwJQYDVQQDDB5Sb2Jl
 # cnRFYm5ldGhJVFN5c3RlbUNvbnN1bHRpbmcwggEiMA0GCSqGSIb3DQEBAQUAA4IB
@@ -158,11 +165,11 @@ End {
 # MIIB2gIBATA9MCkxJzAlBgNVBAMMHlJvYmVydEVibmV0aElUU3lzdGVtQ29uc3Vs
 # dGluZwIQPWSBWJqOxopPvpSTqq3wczAJBgUrDgMCGgUAoHgwGAYKKwYBBAGCNwIB
 # DDEKMAigAoAAoQKAADAZBgkqhkiG9w0BCQMxDAYKKwYBBAGCNwIBBDAcBgorBgEE
-# AYI3AgELMQ4wDAYKKwYBBAGCNwIBFTAjBgkqhkiG9w0BCQQxFgQUJbrnxd7YwYGB
-# ImmYrC2MBk1c76YwDQYJKoZIhvcNAQEBBQAEggEAfHopV3j3rufrGgMquwkXkU8S
-# JuS/ySuOkb6q2Ku88kGRDccvbgvIC00hw00q03Gm20g0qFtgUAvVN0gH2mXrZyNC
-# /2wnCIraPU5m/NcKIBuOKIqk0WKC7/SrDgApTqAuOFS/CuiGVS3EdypqIjNGVfQ7
-# tP0HOmMvHoOXsSBgK+tNgfhhbEwL3tf3ZVqLZ774a3BpSbMlBn40a8IR5FU/+uoc
-# qhenOoH7m8gzUuW3Bszql6rLRuyDXG3XyUYZ4kow9IBxmiNmM/lDbKEVmyMO2u2+
-# 8N9VWY1iSRznbNmQPTCXC7urzmoaFQLqTJaiFqcwdQMAZuQWo6Z4WGqaS0Ndgg==
+# AYI3AgELMQ4wDAYKKwYBBAGCNwIBFTAjBgkqhkiG9w0BCQQxFgQU8JG2bYyF+h0D
+# xsssrku0tZ99+1AwDQYJKoZIhvcNAQEBBQAEggEAIN2LKxfhu/PZFdAxuM7DPGNL
+# ySYo98hdilAe/LJ/Mw54mbo8UIZbZ4BciQJsqtlOaIxzxAVa+VB8SGKzHCFHdGhC
+# xtkAmgu6CN4p84N3MAQ5rHlymybUYM0I3RuT5CmnpP0PRlhK4mFY1SDcMB3xNvzJ
+# 3OqoYRl2p1vfwl6mTA+rNq20Z459IvXlqMhXM+AI91w0DyGDkaeUxuu+0s2PAQlz
+# 8V2KlilTG0QOsrro8Vt+47ITj9jcGYMvHnSLFkH5tpGpKG8ZApGIrtRcvhD8bRcR
+# wv50uXVq+RykiwptzTiiZPcEob1UJagmpfQe1aXCeuy0ldwTZJ+9VdCiWZ63bQ==
 # SIG # End signature block
