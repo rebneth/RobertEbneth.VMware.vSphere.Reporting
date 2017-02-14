@@ -30,7 +30,7 @@ param(
 
 Begin {
 
-	# Check and if not loaded add powersehll snapin
+	# Check and if not loaded add powershell snapin
 	if (-not (Get-PSSnapin VMware.VimAutomation.Core -ErrorAction SilentlyContinue)) {
 		Add-PSSnapin VMware.VimAutomation.Core}
 	# We need the common function CheckFilePathAndCreate

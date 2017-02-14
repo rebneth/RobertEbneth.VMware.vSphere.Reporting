@@ -7,7 +7,7 @@
 .NOTES
   Release 1.1
   Robert Ebneth
-  February, 4th, 2017
+  February, 14th, 2017
 .LINK
   http://github.com/rebneth/RobertEbneth.VMware.vSphere.Reporting
 .PARAMETER Filename
@@ -24,6 +24,9 @@ param(
     [string]$FILENAME = "$($env:USERPROFILE)\vCenterLicensing_$(get-date -f yyyy-MM-dd-HH-mm-ss).csv"
 )
 
+# Check and if not loaded add powershell snapin
+if (-not (Get-PSSnapin VMware.VimAutomation.Core -ErrorAction SilentlyContinue)) {
+	Add-PSSnapin VMware.VimAutomation.Core}
 # We need the common function CheckFilePathAndCreate
 Get-Command "CheckFilePathAndCreate" -errorAction SilentlyContinue | Out-Null
 if ( $? -eq $false) {

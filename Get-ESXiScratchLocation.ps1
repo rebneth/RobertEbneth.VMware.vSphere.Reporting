@@ -1,9 +1,9 @@
-﻿function Export-ESXiSWReleases {
+﻿function Get-ESXiScratchLocation {
 <#
 .SYNOPSIS
-  Creates a csv file with ESXi Server's Package releases
+  Creates a csv file with ESXi Server's Scratch Location
 .DESCRIPTION
-  The function will export the ESXi server's SW packages releases and add them to a CSV file.
+  The function will export the ESXi server's Scratch Location.
 .NOTES
   Release 1.1
   Robert Ebneth
@@ -15,9 +15,9 @@
   all vSphere Clusters will be taken.
 .PARAMETER Filename
   Output filename
-  If not specified, default is $($env:USERPROFILE)\ESXi_Pkgs_releases_$(get-date -f yyyy-MM-dd-HH-mm-ss).csv
+  If not specified, default is $($env:USERPROFILE)\ESXi_Scratch_Location_$(get-date -f yyyy-MM-dd-HH-mm-ss).csv
 .EXAMPLE
-  Export-ESXiSWReleases -Filename “C:\ESXi_swpkgs.csv”
+  Get-ESXiScratchLocation -Filename “C:\ESXi_Scratch_Location.csv”
 #>
 
 [CmdletBinding()]
@@ -27,7 +27,7 @@ param(
 	[string]$CLUSTER,
     [Parameter(Mandatory = $False)]
     [Alias("f")]
-    [string]$FILENAME = "$($env:USERPROFILE)\ESXi_Pkgs_releases_$(get-date -f yyyy-MM-dd-HH-mm-ss).csv"
+    [string]$FILENAME = "$($env:USERPROFILE)\ESXi_Scratch_Location_$(get-date -f yyyy-MM-dd-HH-mm-ss).csv"
 )
 
 
@@ -35,7 +35,7 @@ Begin {
 	# Check and if not loaded add powershell snapin
 	if (-not (Get-PSSnapin VMware.VimAutomation.Core -ErrorAction SilentlyContinue)) {
 		Add-PSSnapin VMware.VimAutomation.Core}
-	# We need the common function CheckFilePathAndCreate
+    # We need the common function CheckFilePathAndCreate
     Get-Command "CheckFilePathAndCreate" -errorAction SilentlyContinue | Out-Null
     if ( $? -eq $false) {
         Write-Error "Function CheckFilePathAndCreate is missing."
@@ -54,40 +54,34 @@ Begin {
 Process {
 
 	foreach ( $Cluster in $Cluster_from_input ) {
-	$ClusterInfo = Get-Cluster $Cluster
-    If ( $? -eq $false ) {
-		Write-Host "Error: Required Cluster $($Cluster) does not exist." -ForegroundColor Red
-		break
-    }
-    $ClusterHosts = Get-Cluster -Name $Cluster | Get-VMHost | Sort Name | Select Name
-    foreach ($esxihost in $ClusterHosts) {
-        $esxcli = Get-EsxCli -VMHost $esxihost.Name
-        $esxisw = $esxcli.software.vib.list($null) | select Name, Id, Version, InstallDate, Vendor, AcceptanceLevel
-        foreach ( $instpkg in $esxisw ) {
-            $swpkg = ""| select ClusterName, ESXiHost, PkgName, PkgId, PkgVersion, PkgInstallDate, PkgVendor, PkgAcceptanceLevel
-            $swpkg.ClusterName = $ClusterInfo.Name
-            $swpkg.ESXiHost = $esxihost.Name
-            $swpkg.PkgName = $instpkg.Name
-            $swpkg.PkgId = $instpkg.Id
-            $swpkg.PkgVersion = $instpkg.Version
-            $swpkg.PkgInstallDate = $instpkg.InstallDate
-            $swpkg.PkgVendor = $instpkg.Vendor
-            $swpkg.PkgAcceptanceLevel = $instpkgget.AcceptanceLevel
-            $report += $swpkg
+	    $ClusterInfo = Get-Cluster $Cluster
+        If ( $? -eq $false ) {
+		    Write-Host "Error: Required Cluster $($Cluster) does not exist." -ForegroundColor Red
+		    break
         }
-    }
+        $ClusterHosts = Get-Cluster -Name $Cluster | Get-VMHost | Sort Name | Select Name, ExtensionData
+        foreach($vmhost in $ClusterHosts) {
+            Write-Host "Getting Scratch Location for Host $($vmhost.Name)..."
+            $HostConfig = “” | Select Cluster, HostName, ScratchLocation, Datastore, Type, SizeMB, FreeMB
+            $HostConfig.Cluster = $Cluster
+            $HostConfig.HostName = $vmhost.Name
+            $HostConfig.ScratchLocation = Get-VMhost -Name $vmhost.Name | Get-AdvancedSetting -Name "ScratchConfig.ConfiguredScratchLocation" | Select-Object -ExpandProperty Value
+            $ESXCli = Get-EsxCli -VMHost $vmhost.Name
+			$MountedFS = $ESXCli.storage.filesystem.list() | select VolumeName, UUID, MountPoint, Type, Size, Free
+            $ScratchFS = $MountedFS | ?{ $HostConfig.ScratchLocation  -Like "$($_.Mountpoint)*" }
+            $HostConfig.Datastore = $ScratchFS.VolumeName
+            $HostConfig.Type = $ScratchFS.Type
+            $HostConfig.SizeMB = [Math]::Round(($ScratchFS.Size/1024/1024), 0)
+            $HostConfig.FreeMB = [Math]::Round(($ScratchFS.Free/1024/1024), 0)
+            $report+=$HostConfig
+        } ### Foreach ESXi Host
     } ### End Foreach Cluster
 } ### End Process
 
 End {
-    Write-Host "Writing ESXi SW Pkg info to file $($OUTPUTFILENAME)..."
+    Write-Host "Writing ESXi scratch info to file $($OUTPUTFILENAME)..."
     $report | Export-csv -Delimiter ";" $OUTPUTFILENAME -noTypeInformation
-    Write-Host ""
-    $SWPkgs = (($report | Select PkgId -Unique).PkgId | Sort)
-    foreach ($Pkg in $SWPkgs) {
-        $SRV_with_this_Pkg = $report | Where { $_.PkgId -eq "$Pkg" }
-        Write-Host "$($Pkg);"$($SRV_with_this_Pkg).Count
-    }
+    $report | FT -AutoSize
 } ### End End
 
 } ### End function

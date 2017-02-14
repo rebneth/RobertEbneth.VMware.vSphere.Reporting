@@ -1,20 +1,23 @@
 ﻿function Export-PortGroupNicTeaming {
 <#
 .SYNOPSIS
-  Creates a csv file with VMware vNetwork Portgroup to vmnic relationship
+  Creates a csv file with VMware vNetwork Portgroup to vmnic relationship and vSW/vPG properties
 .DESCRIPTION
-  Creates a csv file with VMware vNetwork Portgroup to vmnic relationship
+  Creates a csv file with VMware vNetwork Portgroup to vmnic relationship and vSW/vPG properties
 .NOTES
   Release 1.1
   Robert Ebneth
-  February, 4th, 2017
+  February, 14th, 2017
 .LINK
   http://github.com/rebneth/RobertEbneth.VMware.vSphere.Reporting
+.PARAMETER Cluster
+  Selects only ESXi servers from this vSphere Cluster. If nothing is specified,
+  all vSphere Clusters will be taken.
 .PARAMETER Filename
   The path and filename of the CSV file to use when exporting
   DEFAULT: $($env:USERPROFILE)\vSwitch_to_vmnic_$(get-date -f yyyy-MM-dd-HH-mm-ss).csv
 .EXAMPLE
-  Export-VMNetworkPGtoVMNIC -FILENAME d:\vmnics.csv
+  Export-PortGroupNicTeaming -FILENAME d:\vm_vSW_vPG_NicTeaming.csv
 #>
 
 [CmdletBinding()]
@@ -29,7 +32,11 @@
 )
 
 Begin {
-	Import-Module VMware.VimAutomation.Vds  
+	# Check and if not loaded add powershell snapin
+	if (-not (Get-PSSnapin VMware.VimAutomation.Core -ErrorAction SilentlyContinue)) {
+		Add-PSSnapin VMware.VimAutomation.Core}
+	if (!(Get-Module VMware.VimAutomation.Vds -ErrorAction $SilentlyContinue )) {
+		Import-Module VMware.VimAutomation.Vds}
     # We need the common function CheckFilePathAndCreate
     Get-Command "CheckFilePathAndCreate" -errorAction SilentlyContinue | Out-Null
     if ( $? -eq $false) {
@@ -127,8 +134,8 @@ Process {
 # SIG # Begin signature block
 # MIIFmgYJKoZIhvcNAQcCoIIFizCCBYcCAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQU828p4eO/SS1iogCQS14LYgSZ
-# 3WagggMmMIIDIjCCAgqgAwIBAgIQPWSBWJqOxopPvpSTqq3wczANBgkqhkiG9w0B
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUDrFiEmrA7iNGxYWP9zh3qinG
+# 8EKgggMmMIIDIjCCAgqgAwIBAgIQPWSBWJqOxopPvpSTqq3wczANBgkqhkiG9w0B
 # AQUFADApMScwJQYDVQQDDB5Sb2JlcnRFYm5ldGhJVFN5c3RlbUNvbnN1bHRpbmcw
 # HhcNMTcwMjA0MTI0NjQ5WhcNMjIwMjA1MTI0NjQ5WjApMScwJQYDVQQDDB5Sb2Jl
 # cnRFYm5ldGhJVFN5c3RlbUNvbnN1bHRpbmcwggEiMA0GCSqGSIb3DQEBAQUAA4IB
@@ -148,11 +155,11 @@ Process {
 # MIIB2gIBATA9MCkxJzAlBgNVBAMMHlJvYmVydEVibmV0aElUU3lzdGVtQ29uc3Vs
 # dGluZwIQPWSBWJqOxopPvpSTqq3wczAJBgUrDgMCGgUAoHgwGAYKKwYBBAGCNwIB
 # DDEKMAigAoAAoQKAADAZBgkqhkiG9w0BCQMxDAYKKwYBBAGCNwIBBDAcBgorBgEE
-# AYI3AgELMQ4wDAYKKwYBBAGCNwIBFTAjBgkqhkiG9w0BCQQxFgQUa0pD+jHboIFf
-# uuZsngaeYYomV8MwDQYJKoZIhvcNAQEBBQAEggEAA++BLZi7TjQig9ImrzeGJrIP
-# j7jV90rTzXXfdlkMN/7Mpjl7gCnGSD9GciTKRWJ4/z2j/n5iyodZUWy6ADJhes1r
-# dsVzZxF3x+IR5Sd7nNmQc4VNySMXg5fdK+n1TThTjhNX6Q93LafivQJ7KmpqfP08
-# zO5SrVtXNfTRP+Z3l2iU98UhRlFLoQM7NAJ7zZfNCxyomq1c+pk8i+/LcEidpaK1
-# f4aEqyeRc+iMeHEFq+R8pPwv1hie4rkpU67wKF22q+y44IRscQkjz+CVnxkl6jzl
-# nMYeIOdiZCJeeVESNeSuwQAkIIyw714lGUMQNa+zBv3hlkbHpNM++HA+e9KjXw==
+# AYI3AgELMQ4wDAYKKwYBBAGCNwIBFTAjBgkqhkiG9w0BCQQxFgQUcPWaEAhw9KtU
+# RY7eAf4Iy2tPYbgwDQYJKoZIhvcNAQEBBQAEggEAYGTJfB/cW3ueMSUojQH5Kl4X
+# NeY1Ov0nieDA+3HBVURjb0Lc0FidC5cy5N96+yrQWNKiWkdAcWJ94cTDIzQEI622
+# Pq3OJku5fYi4hohMZ3a5KjZwTy/S5gLBqvi+uDZNlLom4A/BwwqeGWt+ad6Ztmz/
+# y3r83Aum8xigaLAMxNuNaYyC3C9u3ETbHySAklDS+Wev1uvFUhOWuZdw9RW5Mb3p
+# hWkEeM3qIC0B5LXNS+8tLh8eqvgiRboR7BKmhq7AoxKNS1cIQKYogYpmhgSQlOXj
+# P/kgwXMfQekmggUtGcoe6A79vr6+MszZbiOheMN1rv+fMsdBkhNg6PtoaNCoZQ==
 # SIG # End signature block

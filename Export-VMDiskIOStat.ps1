@@ -7,9 +7,12 @@ Function Export-VMDiskIOStat {
 .NOTES
   Release 1.1
   Robert Ebneth
-  February, 4th, 2017
+  February, 14th, 2017
 .LINK
   http://github.com/rebneth/RobertEbneth.VMware.vSphere.Reporting
+.PARAMETER Cluster
+  Selects only VMs from this vSphere Cluster. If nothing is specified,
+  all vSphere Clusters will be taken.
 .PARAMETER minutes
   timeframe within the disk io stats will be collected
   DEFAULT: 360 Minutes = 6 hours

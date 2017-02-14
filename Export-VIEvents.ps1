@@ -8,12 +8,15 @@ function Export-VIEvents {
 .NOTES
   Release 1.1
   Robert Ebneth
-  February, 4th, 2017
+  February, 14th, 2017
 .LINK
   http://github.com/rebneth/RobertEbneth.VMware.vSphere.Reporting
 .PARAMETER Minutes
   Timeframe in minutes in which the VI Events are collected from vCenter
   DEFAULT: 1440 Minutes = 1 day
+.PARAMETER Cluster
+  Selects only ESXi servers from this vSphere Cluster. If nothing is specified,
+  all vSphere Clusters will be taken.
 .PARAMETER Filename
   The path of the CSV file to use when exporting
   Default: "$($env:USERPROFILE)\VI-Events_$(get-date -f yyyy-MM-dd-HH-mm-ss).csv"
@@ -39,7 +42,10 @@ param(
 )
 
 Begin {
-    # We need the common function CheckFilePathAndCreate
+	# Check and if not loaded add powershell snapin
+	if (-not (Get-PSSnapin VMware.VimAutomation.Core -ErrorAction SilentlyContinue)) {
+		Add-PSSnapin VMware.VimAutomation.Core}
+	# We need the common function CheckFilePathAndCreate
     Get-Command "CheckFilePathAndCreate" -errorAction SilentlyContinue | Out-Null
     if ( $? -eq $false) {
         Write-Error "Function CheckFilePathAndCreate is missing."
