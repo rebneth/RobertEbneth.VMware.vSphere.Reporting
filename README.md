@@ -14,7 +14,7 @@ Export-iSCSISettings		Exports current iSCSI Initiator sttings and dynamic/static
 Export-PortGroupNicTeaming	Exports the Portgroup to VNIC and vmdk / Teaming properties to a csv file  
 Export-VIEvents				Exports the ESXi Events to a csv file  
 Export-VMDiskIOStat			Exports the VM Disk IO Statistic to a csv file  
-Export-VMDRSRuleInfo		Exports DRS Rules for each VM within a vSphere Cluster to a csv file
+Export-VMDRSRuleInfo		Exports DRS Rules for each VM within a vSphere Cluster to a csv file  
 Export-VMHardDiskProps		Exports vmdk properties (location, size...) to a csv file  
 Export-VMProperties			Exports major important VM Properties to a csv file  
 Get-ESXiScratchLocation		Exports the current ESXi Scratch location to a csv file  
