@@ -102,17 +102,19 @@ Process {
                 if ($pg.extensiondata.spec.policy.Nicteaming.NicOrder.StandbyNic) {
                     $PGprops.Setting = "PG"
                     $PGprops.StandbyNIC = [string]::Join(',',$pg.extensiondata.spec.policy.Nicteaming.NicOrder.StandbyNic)}	
-				if ($vNicTab.ContainsKey($pg.Name)) {$PGprops.Device = $vNicTab[$pg.Name].Device}
-                if ($vNicTab.ContainsKey($pg.Name)) {$PGprops.Mac = $vNicTab[$pg.Name].Spec.Mac}
-                if ($vNicTab.ContainsKey($pg.Name)) {$PGprops.Dhcp = $vNicTab[$pg.Name].Spec.Ip.Dhcp}
-                if ($vNicTab.ContainsKey($pg.Name)) {$PGprops.IP = $vNicTab[$pg.Name].Spec.Ip.IpAddress}
-                if ($vNicTab.ContainsKey($pg.Name)) {$PGprops.SubnetMask = $vNicTab[$pg.Name].Spec.Ip.SubnetMask}
-                if ($vNicTab.ContainsKey($pg.Name)) {$PGprops.MTU = $vNicTab[$pg.Name].Spec.Mtu}
-                if ($vNicTab.ContainsKey($pg.Name)) {$PGprops.TsoEnabled = $vNicTab[$pg.Name].Spec.TsoEnabled}
-                if ($vNicTab.ContainsKey($pg.Name)) {$PGprops.ShapingEnabled = $vNicTab[$pg.Name].Spec.Spec.Policy.ShapingPolicy.Enabled}
-                if ($vNicTab.ContainsKey($pg.Name)) {$PGprops.AverageBandwidth = $vNicTab[$pg.Name].Spec.Spec.Policy.ShapingPolicy.AverageBandwidth}
-                if ($vNicTab.ContainsKey($pg.Name)) {$PGprops.PeakBandwidth = $vNicTab[$pg.Name].Spec.Spec.Policy.ShapingPolicy.PeakBandwidth}
-                if ($vNicTab.ContainsKey($pg.Name)) {$PGprops.BurstSize = $vNicTab[$pg.Name].Spec.Spec.Policy.ShapingPolicy.BurstSize}
+				if ($vNicTab.ContainsKey($pg.Name)) {
+                    $PGprops.Device = $vNicTab[$pg.Name].Device
+                    $PGprops.Mac = $vNicTab[$pg.Name].Spec.Mac
+                    $PGprops.Dhcp = $vNicTab[$pg.Name].Spec.Ip.Dhcp
+                    $PGprops.IP = $vNicTab[$pg.Name].Spec.Ip.IpAddress
+                    $PGprops.SubnetMask = $vNicTab[$pg.Name].Spec.Ip.SubnetMask
+                    $PGprops.MTU = $vNicTab[$pg.Name].Spec.Mtu
+                    $PGprops.TsoEnabled = $vNicTab[$pg.Name].Spec.TsoEnabled
+                    $PGprops.ShapingEnabled = $vNicTab[$pg.Name].Spec.Spec.Policy.ShapingPolicy.Enabled
+                    $PGprops.AverageBandwidth = $vNicTab[$pg.Name].Spec.Spec.Policy.ShapingPolicy.AverageBandwidth
+                    $PGprops.PeakBandwidth = $vNicTab[$pg.Name].Spec.Spec.Policy.ShapingPolicy.PeakBandwidth
+                    $PGprops.BurstSize = $vNicTab[$pg.Name].Spec.Spec.Policy.ShapingPolicy.BurstSize
+                }
                 $PGprops.Policy = $pg.extensiondata.Spec.Policy.Nicteaming.Policy
 				$PGprops.NotifySwitches = $pg.extensiondata.Spec.Policy.Nicteaming.NotifySwitches
 				$PGprops.RollingOrder = $pg.extensiondata.Spec.Policy.Nicteaming.RollingOrder
@@ -134,8 +136,8 @@ Process {
 # SIG # Begin signature block
 # MIIFmgYJKoZIhvcNAQcCoIIFizCCBYcCAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUErNCO2sdfyM7Wm/J/BdpNAd8
-# wf+gggMmMIIDIjCCAgqgAwIBAgIQPWSBWJqOxopPvpSTqq3wczANBgkqhkiG9w0B
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUieiVphcmnmcHvIL1Aqygf9Ce
+# LjWgggMmMIIDIjCCAgqgAwIBAgIQPWSBWJqOxopPvpSTqq3wczANBgkqhkiG9w0B
 # AQUFADApMScwJQYDVQQDDB5Sb2JlcnRFYm5ldGhJVFN5c3RlbUNvbnN1bHRpbmcw
 # HhcNMTcwMjA0MTI0NjQ5WhcNMjIwMjA1MTI0NjQ5WjApMScwJQYDVQQDDB5Sb2Jl
 # cnRFYm5ldGhJVFN5c3RlbUNvbnN1bHRpbmcwggEiMA0GCSqGSIb3DQEBAQUAA4IB
@@ -155,11 +157,11 @@ Process {
 # MIIB2gIBATA9MCkxJzAlBgNVBAMMHlJvYmVydEVibmV0aElUU3lzdGVtQ29uc3Vs
 # dGluZwIQPWSBWJqOxopPvpSTqq3wczAJBgUrDgMCGgUAoHgwGAYKKwYBBAGCNwIB
 # DDEKMAigAoAAoQKAADAZBgkqhkiG9w0BCQMxDAYKKwYBBAGCNwIBBDAcBgorBgEE
-# AYI3AgELMQ4wDAYKKwYBBAGCNwIBFTAjBgkqhkiG9w0BCQQxFgQUMZxRYfvwJGQX
-# GFjZrb22yIumOOUwDQYJKoZIhvcNAQEBBQAEggEARLrw6rpJA/24M/iD+45dPWrU
-# Fk2T0RnFENATqvfEDQOcWHVrP2hF6YCnpN0mHj0CTytd7283KANJ4N5X2cw37yAL
-# V3uutG4m7wj4AQFnBpbUyH2DKJe5fIkfFcWxEF834rpPYYtRL7f08zkTzAL6dwSp
-# AukVI48g6tVMzjjYi0yvtAx7BnDo/rCG9LoSKNMMg/C4f9zrGkaUuuQ6hDa7OZB0
-# WleBUv5DgKJfxxDR8TamGoYfBeA5z/yIiMczCi7NfnQJNJve01iU9Xh7DslaGIB7
-# 4R323PSMu6J7tWQTtPFECnimlgDyXwj2Ad6zLrFzF4wg4SIfP3AgrdbX/H1zAg==
+# AYI3AgELMQ4wDAYKKwYBBAGCNwIBFTAjBgkqhkiG9w0BCQQxFgQU7kYWkeul/uhq
+# 8Bdc5TgaSHK9mRAwDQYJKoZIhvcNAQEBBQAEggEAV+xeiR+Ey9wn7PYsVUm53wPc
+# be+7js4PbD8AIkOYf0aMNeeT3GHuHbBRjxsmllqrPqwJbeKwKARi8xNQJGPpshZA
+# Ee8fBwgqaC6TghmDO7aji+ZzR5ozyTmUFpA8Ur/8OPj62R42Ij/UnlITe7IAULL0
+# 3AHI33EtyrkfghrkiC4cxfr4Ei2A/IwFCIdAQBOMvJtOPZlQys7lQ6jTWwxn+ZKT
+# got2SH/P+7bFvp3UQg1q6LG9JIHDjr4bvnZJmGxRTGKveQwsjRfXrSsiWTT9fbtz
+# H3zKOGw3ctaM0buh4kseu52mYHMlAen10GDqya1kP5DW3ImGDgwEEbW5wy//ug==
 # SIG # End signature block
