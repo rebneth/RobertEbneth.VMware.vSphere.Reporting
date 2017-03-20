@@ -35,7 +35,7 @@ Begin {
 	# Check and if not loaded add powershell snapin
 	if (-not (Get-PSSnapin VMware.VimAutomation.Core -ErrorAction SilentlyContinue)) {
 		Add-PSSnapin VMware.VimAutomation.Core}
-	if (!(Get-Module VMware.VimAutomation.Vds -ErrorAction $SilentlyContinue )) {
+	if (!(Get-Module VMware.VimAutomation.Vds -ErrorAction SilentlyContinue )) {
 		Import-Module VMware.VimAutomation.Vds}
     # We need the common function CheckFilePathAndCreate
     Get-Command "CheckFilePathAndCreate" -errorAction SilentlyContinue | Out-Null
@@ -134,8 +134,8 @@ Process {
 # SIG # Begin signature block
 # MIIFmgYJKoZIhvcNAQcCoIIFizCCBYcCAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUJNwfUIK5ogurCBLu7GhGtEgP
-# /oigggMmMIIDIjCCAgqgAwIBAgIQPWSBWJqOxopPvpSTqq3wczANBgkqhkiG9w0B
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUErNCO2sdfyM7Wm/J/BdpNAd8
+# wf+gggMmMIIDIjCCAgqgAwIBAgIQPWSBWJqOxopPvpSTqq3wczANBgkqhkiG9w0B
 # AQUFADApMScwJQYDVQQDDB5Sb2JlcnRFYm5ldGhJVFN5c3RlbUNvbnN1bHRpbmcw
 # HhcNMTcwMjA0MTI0NjQ5WhcNMjIwMjA1MTI0NjQ5WjApMScwJQYDVQQDDB5Sb2Jl
 # cnRFYm5ldGhJVFN5c3RlbUNvbnN1bHRpbmcwggEiMA0GCSqGSIb3DQEBAQUAA4IB
@@ -155,11 +155,11 @@ Process {
 # MIIB2gIBATA9MCkxJzAlBgNVBAMMHlJvYmVydEVibmV0aElUU3lzdGVtQ29uc3Vs
 # dGluZwIQPWSBWJqOxopPvpSTqq3wczAJBgUrDgMCGgUAoHgwGAYKKwYBBAGCNwIB
 # DDEKMAigAoAAoQKAADAZBgkqhkiG9w0BCQMxDAYKKwYBBAGCNwIBBDAcBgorBgEE
-# AYI3AgELMQ4wDAYKKwYBBAGCNwIBFTAjBgkqhkiG9w0BCQQxFgQU2UX0UgfNmOG8
-# EpEHcrSK8nV0Hd8wDQYJKoZIhvcNAQEBBQAEggEASJ8iZ0CCoFI+2br/pBoh3FnM
-# cSs1ZKDnJUq68EcoIQAo4nOkaXrLdTkA2+w4HQoX9D9RKo1WuHy5Qr2zD52kEdKO
-# AdEeV4OCgqWAGmgBDHA7UwgikUzK+kI9AIQYMchXFf9ateUam4NLiNZXQDjN15zw
-# nDJ01DdinuIasVIY3NjPy7dNW4UuGwQjH6WbWwJ456nynEih5JYuuRoxGQnkhuTC
-# itCI5/jSsfcNoLjycVWtIgAQIQgZUqa57rp5Lb5pWjDtNJ7yTL/HGt9YQptSM1K1
-# ukfqHolm7U0JQVLO0vO5VWmSMXLpa3yNbhGC6lKhzehjm/uSLP5sGKhxlC26Mw==
+# AYI3AgELMQ4wDAYKKwYBBAGCNwIBFTAjBgkqhkiG9w0BCQQxFgQUMZxRYfvwJGQX
+# GFjZrb22yIumOOUwDQYJKoZIhvcNAQEBBQAEggEARLrw6rpJA/24M/iD+45dPWrU
+# Fk2T0RnFENATqvfEDQOcWHVrP2hF6YCnpN0mHj0CTytd7283KANJ4N5X2cw37yAL
+# V3uutG4m7wj4AQFnBpbUyH2DKJe5fIkfFcWxEF834rpPYYtRL7f08zkTzAL6dwSp
+# AukVI48g6tVMzjjYi0yvtAx7BnDo/rCG9LoSKNMMg/C4f9zrGkaUuuQ6hDa7OZB0
+# WleBUv5DgKJfxxDR8TamGoYfBeA5z/yIiMczCi7NfnQJNJve01iU9Xh7DslaGIB7
+# 4R323PSMu6J7tWQTtPFECnimlgDyXwj2Ad6zLrFzF4wg4SIfP3AgrdbX/H1zAg==
 # SIG # End signature block
