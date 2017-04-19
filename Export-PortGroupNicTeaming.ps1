@@ -5,9 +5,9 @@
 .DESCRIPTION
   Creates a csv file with VMware vNetwork Portgroup to vmnic relationship and vSW/vPG properties
 .NOTES
-  Release 1.1
+  Release 1.3
   Robert Ebneth
-  February, 14th, 2017
+  April, 19th, 2017
 .LINK
   http://github.com/rebneth/RobertEbneth.VMware.vSphere.Reporting
 .PARAMETER Cluster
@@ -15,7 +15,7 @@
   all vSphere Clusters will be taken.
 .PARAMETER Filename
   The path and filename of the CSV file to use when exporting
-  DEFAULT: $($env:USERPROFILE)\vSwitch_to_vmnic_$(get-date -f yyyy-MM-dd-HH-mm-ss).csv
+  DEFAULT: $($env:USERPROFILE)\vSwitch_portgroup_nicteaming_and_shaping_$(get-date -f yyyy-MM-dd-HH-mm-ss).csv
 .EXAMPLE
   Export-PortGroupNicTeaming -FILENAME d:\vm_vSW_vPG_NicTeaming.csv
 #>
@@ -28,7 +28,7 @@
     [string]$CLUSTER,
     [Parameter(Mandatory = $false, Position = 1)]
     [alias("f")]
-    [string]$FILENAME = "$($env:USERPROFILE)\vSwitch_portgroup_nicteaming_$(get-date -f yyyy-MM-dd-HH-mm-ss).csv"
+    [string]$FILENAME = "$($env:USERPROFILE)\vSwitch_portgroup_nicteaming_and_shaping_$(get-date -f yyyy-MM-dd-HH-mm-ss).csv"
 )
 
 Begin {
@@ -72,35 +72,37 @@ Process {
         $vNicTab = @{}
 		$VMHost.ExtensionData.Config.Network.Vnic | %{ $vNicTab.Add($_.Portgroup,$_)}
         foreach($vsw in (Get-VirtualSwitch -VMHost $VMHost)){
-            $PGprops = "" | Select Cluster, ESXiHost, vSwitch, Portgroup, VLAN, Setting, ActiveNIC, StandbyNIC, Device, Mac, DHCP, IP, SubnetMask, MTU, TsoEnabled, Policy, NotifySwitches, RollingOrder, ShapingEnabled, AverageBandwidth, PeakBandwidth, BurstSize
-			$PGprops.Cluster = $Cluster
-			$PGprops.ESXiHost = $($VMHost.Name)
-			$PGprops.vSwitch = $vsw
-			$PGprops.PortGroup = "vSwitch Settings"
-            $PGprops.Setting = "vSw"
-            $PGprops.MTU = $vsw.Mtu
-            $PGprops.Policy = $vsw.extensiondata.Spec.Policy.Nicteaming.Policy
-			$PGprops.NotifySwitches = $vsw.extensiondata.Spec.Policy.Nicteaming.NotifySwitches
-			$PGprops.RollingOrder = $vsw.extensiondata.Spec.Policy.Nicteaming.RollingOrder
-            $PGprops.ShapingEnabled = $vsw.ExtensionData.Spec.Policy.ShapingPolicy.ShapingEnabled
-            $PGprops.AverageBandwidth = $vsw.ExtensionData.Spec.Policy.ShapingPolicy.AverageBandwidth
-            $PGprops.PeakBandwidth = $vsw.ExtensionData.Spec.Policy.ShapingPolicy.PeakBandwidth
-            $PGprops.BurstSize = $vsw.ExtensionData.Spec.Policy.ShapingPolicy.BurstSize
-            $report += $PGprops
+            $VSWprops = "" | Select Cluster, ESXiHost, vSwitch, Portgroup, VLAN, ActiveNIC, StandbyNIC, Device, Mac, DHCP, IP, SubnetMask, MTU, AllowPromiscuous, MacChanges, ForgedTransmits, TsoEnabled, Policy, NotifySwitches, RollingOrder, ShapingEnabled, AverageBandwidth, PeakBandwidth, BurstSize
+			$VSWprops.Cluster = $Cluster
+			$VSWprops.ESXiHost = $($VMHost.Name)
+			$VSWprops.vSwitch = $vsw
+			$VSWprops.PortGroup = "vSwitch Settings"
+            if ($vsw.extensiondata.spec.policy.Nicteaming.NicOrder.ActiveNic) {
+                $VSWprops.ActiveNIC = [string]::Join(',',$vsw.extensiondata.spec.policy.Nicteaming.NicOrder.ActiveNic)}
+            if ($vsw.extensiondata.spec.policy.Nicteaming.NicOrder.StandbyNic) {
+                $VSWprops.StandbyNIC = [string]::Join(',',$vsw.extensiondata.spec.policy.Nicteaming.NicOrder.StandbyNic)}
+            $VSWprops.MTU = $vsw.Mtu
+            $VSWprops.AllowPromiscuous = $vsw.extensiondata.Spec.Policy.Security.AllowPromiscuous
+            $VSWprops.MacChanges = $vsw.extensiondata.Spec.Policy.Security.MacChanges
+            $VSWprops.ForgedTransmits = $vsw.extensiondata.Spec.Policy.Security.ForgedTransmits
+            $VSWprops.Policy = $vsw.extensiondata.Spec.Policy.Nicteaming.Policy
+			$VSWprops.NotifySwitches = $vsw.extensiondata.Spec.Policy.Nicteaming.NotifySwitches
+			$VSWprops.RollingOrder = $vsw.extensiondata.Spec.Policy.Nicteaming.RollingOrder
+            $VSWprops.ShapingEnabled = $vsw.ExtensionData.Spec.Policy.ShapingPolicy.ShapingEnabled
+            $VSWprops.AverageBandwidth = $vsw.ExtensionData.Spec.Policy.ShapingPolicy.AverageBandwidth
+            $VSWprops.PeakBandwidth = $vsw.ExtensionData.Spec.Policy.ShapingPolicy.PeakBandwidth
+            $VSWprops.BurstSize = $vsw.ExtensionData.Spec.Policy.ShapingPolicy.BurstSize
+            $report += $VSWprops
 			foreach($pg in (Get-VirtualPortGroup -VirtualSwitch $vsw)){
-				$PGprops = "" | Select Cluster, ESXiHost, vSwitch, Portgroup, VLAN, Setting, ActiveNIC, StandbyNIC, Device, Mac, DHCP, IP, SubnetMask, MTU, TsoEnabled, Policy, NotifySwitches, RollingOrder, ShapingEnabled, AverageBandwidth, PeakBandwidth, BurstSize
+				$PGprops = "" | Select Cluster, ESXiHost, vSwitch, Portgroup, VLAN, Setting, ActiveNIC, StandbyNIC, Device, Mac, DHCP, IP, SubnetMask, MTU, AllowPromiscuous, MacChanges, ForgedTransmits, TsoEnabled, Policy, NotifySwitches, RollingOrder, ShapingEnabled, AverageBandwidth, PeakBandwidth, BurstSize
 				$PGprops.Cluster = $Cluster
 				$PGprops.ESXiHost = $($VMHost.Name)
 				$PGprops.vSwitch = $vsw
 				$PGprops.PortGroup = $pg.Name
 				$PGprops.VLAN = $pg.VLanId
                 if ($pg.extensiondata.spec.policy.Nicteaming.NicOrder.ActiveNic) {
-                    $PGprops.Setting = "PG"
                     $PGprops.ActiveNIC = [string]::Join(',',$pg.extensiondata.spec.policy.Nicteaming.NicOrder.ActiveNic)}
-                  else {
-                    $PGprops.Setting = "vSw"}			
                 if ($pg.extensiondata.spec.policy.Nicteaming.NicOrder.StandbyNic) {
-                    $PGprops.Setting = "PG"
                     $PGprops.StandbyNIC = [string]::Join(',',$pg.extensiondata.spec.policy.Nicteaming.NicOrder.StandbyNic)}	
 				if ($vNicTab.ContainsKey($pg.Name)) {
                     $PGprops.Device = $vNicTab[$pg.Name].Device
@@ -109,6 +111,10 @@ Process {
                     $PGprops.IP = $vNicTab[$pg.Name].Spec.Ip.IpAddress
                     $PGprops.SubnetMask = $vNicTab[$pg.Name].Spec.Ip.SubnetMask
                     $PGprops.MTU = $vNicTab[$pg.Name].Spec.Mtu
+                    $PGprops.AllowPromiscuous = $vNicTab[$pg.Name].Spec.Policy.Security.AllowPromiscuous
+                    $PGprops.MacChanges = $vNicTab[$pg.Name].Spec.Policy.Security.MacChanges
+                    $PGprops.ForgedTransmits =$vNicTab[$pg.Name].Spec.Policy.Security.ForgedTransmits
+                    $PGprops.Policy = $vNicTab[$pg.Name].Spec.Policy.Nicteaming.Policy
                     $PGprops.TsoEnabled = $vNicTab[$pg.Name].Spec.TsoEnabled
                     $PGprops.ShapingEnabled = $vNicTab[$pg.Name].Spec.Spec.Policy.ShapingPolicy.Enabled
                     $PGprops.AverageBandwidth = $vNicTab[$pg.Name].Spec.Spec.Policy.ShapingPolicy.AverageBandwidth
@@ -136,8 +142,8 @@ Process {
 # SIG # Begin signature block
 # MIIFmgYJKoZIhvcNAQcCoIIFizCCBYcCAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUieiVphcmnmcHvIL1Aqygf9Ce
-# LjWgggMmMIIDIjCCAgqgAwIBAgIQPWSBWJqOxopPvpSTqq3wczANBgkqhkiG9w0B
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUzl+BUYK/bnjnfyC900nIHFUy
+# WcGgggMmMIIDIjCCAgqgAwIBAgIQPWSBWJqOxopPvpSTqq3wczANBgkqhkiG9w0B
 # AQUFADApMScwJQYDVQQDDB5Sb2JlcnRFYm5ldGhJVFN5c3RlbUNvbnN1bHRpbmcw
 # HhcNMTcwMjA0MTI0NjQ5WhcNMjIwMjA1MTI0NjQ5WjApMScwJQYDVQQDDB5Sb2Jl
 # cnRFYm5ldGhJVFN5c3RlbUNvbnN1bHRpbmcwggEiMA0GCSqGSIb3DQEBAQUAA4IB
@@ -157,11 +163,11 @@ Process {
 # MIIB2gIBATA9MCkxJzAlBgNVBAMMHlJvYmVydEVibmV0aElUU3lzdGVtQ29uc3Vs
 # dGluZwIQPWSBWJqOxopPvpSTqq3wczAJBgUrDgMCGgUAoHgwGAYKKwYBBAGCNwIB
 # DDEKMAigAoAAoQKAADAZBgkqhkiG9w0BCQMxDAYKKwYBBAGCNwIBBDAcBgorBgEE
-# AYI3AgELMQ4wDAYKKwYBBAGCNwIBFTAjBgkqhkiG9w0BCQQxFgQU7kYWkeul/uhq
-# 8Bdc5TgaSHK9mRAwDQYJKoZIhvcNAQEBBQAEggEAV+xeiR+Ey9wn7PYsVUm53wPc
-# be+7js4PbD8AIkOYf0aMNeeT3GHuHbBRjxsmllqrPqwJbeKwKARi8xNQJGPpshZA
-# Ee8fBwgqaC6TghmDO7aji+ZzR5ozyTmUFpA8Ur/8OPj62R42Ij/UnlITe7IAULL0
-# 3AHI33EtyrkfghrkiC4cxfr4Ei2A/IwFCIdAQBOMvJtOPZlQys7lQ6jTWwxn+ZKT
-# got2SH/P+7bFvp3UQg1q6LG9JIHDjr4bvnZJmGxRTGKveQwsjRfXrSsiWTT9fbtz
-# H3zKOGw3ctaM0buh4kseu52mYHMlAen10GDqya1kP5DW3ImGDgwEEbW5wy//ug==
+# AYI3AgELMQ4wDAYKKwYBBAGCNwIBFTAjBgkqhkiG9w0BCQQxFgQUrnBOFJjNChOh
+# fEkwpCEje6gr+LkwDQYJKoZIhvcNAQEBBQAEggEAcwRhbMsw/SaHt+31iyw4FRIH
+# 5iQ7vU19Dwfk/gsDB3knvGz0y8sXXfqSmsDwY02SIwq9iv7Rtxwy2/25LTds1R/R
+# fpKMEg1/TgR4f8UE3cTw2JyYKLClZ8FyWwU6yDPpOCfLPA7Zd2U8HCCoOH0SGFCe
+# 0CGyNgsOwOCzfDMEqY05S5VWi8MJ1Sqhsz2QIVTUcMgRS74kWZ+N8iicPQboK7EP
+# NfgEywgpTLOpVfejXJdRsDAUUOcFitXZsM2f28/KkkZ9OmHzTbdrGgMOYDWZTCGQ
+# +cVdzXLnvOIyhmUeYcf3PwXIYw/YsRXMDXcQXOJfAfg7fFWIu4xrAQ9NXVBMRw==
 # SIG # End signature block

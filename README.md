@@ -3,7 +3,7 @@
 **VMware Reporting Powershell Module and Scripts
 used for VMware Health Check and documentation**
 
-Latest Update: February, 16th, 2017
+Latest Update: April, 19th, 2017
 
 CheckFilePathAndCreate		Function that is used in all Scripts for checking the specified filepath  
 Export-DatastoreProps		Exports the Overcommitment and VM# for each datastore to a csv file  
@@ -16,6 +16,7 @@ Export-VIEvents				Exports the ESXi Events to a csv file
 Export-VMDiskIOStat			Exports the VM Disk IO Statistic to a csv file  
 Export-VMDRSRuleInfo		Exports DRS Rules for each VM within a vSphere Cluster to a csv file  
 Export-VMHardDiskProps		Exports vmdk properties (location, size...) to a csv file  
+Export-VMNetworkPNICProps	Exports pnic properties from ESXi server to a csv file  
 Export-VMProperties			Exports major important VM Properties to a csv file  
 Get-ESXiScratchLocation		Exports the current ESXi Scratch location to a csv file  
 Get-vCenterLicensing		Gets the registerd vCenter licenses  
