@@ -3,7 +3,7 @@
 **VMware Reporting Powershell Module and Scripts
 used for VMware Health Check and documentation**
 
-Latest Update: April, 19th, 2017
+Latest Update: April, 21th, 2017
 
 CheckFilePathAndCreate		Function that is used in all Scripts for checking the specified filepath  
 Export-DatastoreProps		Exports the Overcommitment and VM# for each datastore to a csv file  
