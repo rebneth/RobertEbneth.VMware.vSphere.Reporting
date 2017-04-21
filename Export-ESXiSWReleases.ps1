@@ -5,9 +5,9 @@
 .DESCRIPTION
   The function will export the ESXi server's SW packages releases and add them to a CSV file.
 .NOTES
-  Release 1.1
+  Release 1.2
   Robert Ebneth
-  February, 14th, 2017
+  March, 21st, 2017
 .LINK
   http://github.com/rebneth/RobertEbneth.VMware.vSphere.Reporting
 .PARAMETER Cluster
@@ -30,7 +30,6 @@ param(
     [string]$FILENAME = "$($env:USERPROFILE)\ESXi_Pkgs_releases_$(get-date -f yyyy-MM-dd-HH-mm-ss).csv"
 )
 
-
 Begin {
 	# Check and if not loaded add powershell snapin
 	if (-not (Get-PSSnapin VMware.VimAutomation.Core -ErrorAction SilentlyContinue)) {
@@ -48,7 +47,13 @@ Begin {
 		$Cluster_from_Input = $CLUSTER
 	}
 	$OUTPUTFILENAME = CheckFilePathAndCreate "$FILENAME"
-    $report = @()
+    $report = New-Object System.Collections.ArrayList
+    $HostCount = 0
+
+   	Write-Host ""
+	Write-Host "Creating ESXi VIB Installation report..."
+	Write-Host ""
+
 } ### End Begin
 
 Process {
@@ -59,7 +64,7 @@ Process {
 		Write-Host "Error: Required Cluster $($Cluster) does not exist." -ForegroundColor Red
 		break
     }
-    $ClusterHosts = Get-Cluster -Name $Cluster | Get-VMHost | Sort Name | Select Name
+    $ClusterHosts = Get-Cluster -Name $Cluster | Get-VMHost | Where { $_.PowerState -eq "PoweredOn" } | Sort Name | Select Name
     foreach ($esxihost in $ClusterHosts) {
         $esxcli = Get-EsxCli -VMHost $esxihost.Name
         $esxisw = $esxcli.software.vib.list($null) | select Name, Id, Version, InstallDate, Vendor, AcceptanceLevel
@@ -73,9 +78,10 @@ Process {
             $swpkg.PkgInstallDate = $instpkg.InstallDate
             $swpkg.PkgVendor = $instpkg.Vendor
             $swpkg.PkgAcceptanceLevel = $instpkgget.AcceptanceLevel
-            $report += $swpkg
+            [void] $report.Add($swpkg)
         }
-    }
+        $HostCount++
+    } ### End Foreach ESXi Host
     } ### End Foreach Cluster
 } ### End Process
 
@@ -83,19 +89,31 @@ End {
     Write-Host "Writing ESXi SW Pkg info to file $($OUTPUTFILENAME)..."
     $report | Export-csv -Delimiter ";" $OUTPUTFILENAME -noTypeInformation
     Write-Host ""
+    #
+    # Finally we give a small summary report
+    # 
+    Write-Host "Creating ESXi VIB Summary Report..."
     $SWPkgs = (($report | Select PkgId -Unique).PkgId | Sort)
-    foreach ($Pkg in $SWPkgs) {
+    $VIBSummary = foreach ($Pkg in $SWPkgs) {
         $SRV_with_this_Pkg = $report | Where { $_.PkgId -eq "$Pkg" }
-        Write-Host "$($Pkg);"$($SRV_with_this_Pkg).Count
-    }
+        if ( ! $($SRV_with_this_Pkg).Count ) { $VIB_Installed_Count = "1" }
+            else {$VIB_Installed_Count = $($SRV_with_this_Pkg).Count}
+        Select -InputObject $Pkg -Property @{N="VIB";E={$Pkg}},
+            @{N="Installed VIBs";E={$VIB_Installed_Count}},
+            @{N="Total Hosts";E={$HostCount}}
+        } ### End Select
+    $VIBSummary | Ft -AutoSize
+    Write-Host "Creating ESXi VIB Differences Report..."
+    $VIBDifferences = $VIBSummary | where { $_."Installed VIBs" -ne $HostCount }
+    $VIBDifferences | Ft -AutoSize
 } ### End End
 
 } ### End function
 # SIG # Begin signature block
 # MIIFmgYJKoZIhvcNAQcCoIIFizCCBYcCAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUGylspwq4t24Qj8/IKZDFqpTv
-# 0DigggMmMIIDIjCCAgqgAwIBAgIQPWSBWJqOxopPvpSTqq3wczANBgkqhkiG9w0B
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUW/8v2nX+SbFvDscFkt8KAP1R
+# ez2gggMmMIIDIjCCAgqgAwIBAgIQPWSBWJqOxopPvpSTqq3wczANBgkqhkiG9w0B
 # AQUFADApMScwJQYDVQQDDB5Sb2JlcnRFYm5ldGhJVFN5c3RlbUNvbnN1bHRpbmcw
 # HhcNMTcwMjA0MTI0NjQ5WhcNMjIwMjA1MTI0NjQ5WjApMScwJQYDVQQDDB5Sb2Jl
 # cnRFYm5ldGhJVFN5c3RlbUNvbnN1bHRpbmcwggEiMA0GCSqGSIb3DQEBAQUAA4IB
@@ -115,11 +133,11 @@ End {
 # MIIB2gIBATA9MCkxJzAlBgNVBAMMHlJvYmVydEVibmV0aElUU3lzdGVtQ29uc3Vs
 # dGluZwIQPWSBWJqOxopPvpSTqq3wczAJBgUrDgMCGgUAoHgwGAYKKwYBBAGCNwIB
 # DDEKMAigAoAAoQKAADAZBgkqhkiG9w0BCQMxDAYKKwYBBAGCNwIBBDAcBgorBgEE
-# AYI3AgELMQ4wDAYKKwYBBAGCNwIBFTAjBgkqhkiG9w0BCQQxFgQUtF9Wptz4T/Nu
-# Ok5mhIyPo1mB3kswDQYJKoZIhvcNAQEBBQAEggEAKAKA8Zc8elasxwa42TnO3k2E
-# pg9tdb3To5zObOeuqt1V0CcXnUWyhyAEfbinBqAF1LbZcOootaSlmjcZQ+sNn9n/
-# Rnst7WZ8woz725jb2Z2TtBURcmVvwSvM3GKMJsRkhajp2xc+tDwcx4nKGKQIHT5h
-# +PPJIaXsECOA/bxzuO6DxRVSJHYgXuU2SYMAcZoM8d6XEUXFivROhQboF8khXOcu
-# uM3LARbGu0+a0MyAm88TS5fTgQXs1OkzS2ZEQ1ydLBdTYpvvBrD++7dA7a04sQeN
-# L8TQtgQU4gARtMtx8HBWbEaLQGeYwbneUuPeiqavjqE5qyzA5eU7e+nA2DY2hw==
+# AYI3AgELMQ4wDAYKKwYBBAGCNwIBFTAjBgkqhkiG9w0BCQQxFgQUazZZPNZmNLfj
+# Rg8mX1GzK+NBcKwwDQYJKoZIhvcNAQEBBQAEggEAaksymTJeY/Iskdmrja2hAKLC
+# jNQAHoXs2zj1lUJTq0ZoghNnhVNnkf6/X0EQcDs/22sPIvS5T6K7l2+DhkNBDc0a
+# 7jOtwgSpFA4T1ju6XtcpQm7d1uPC6ssedAjOgY1Cx0qYQ0V5HhdbSSaxw78krRO9
+# sNIG8kp+OVsnVGmp8nT5XeNsgisLCzLXlBRZdX/yr7WxPRRDN84VS1xh7YTB72EJ
+# xtiDkqXyEOpn6Qf9R8jrvXUabspNuDkOOVXSN5Uy4L1UTrIaQf49uVga7PdbaBZT
+# 1O2x0MVaF3XNXmRLPo/ksHGiminQmdoQPEHegKewciVMqg0yuJo4WcNQs7imPA==
 # SIG # End signature block

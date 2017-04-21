@@ -6,9 +6,9 @@ function Export-VIEvents {
   The function will export the Events from vSphere Environment
   and add them to a CSV file.
 .NOTES
-  Release 1.1
+  Release 1.2
   Robert Ebneth
-  February, 14th, 2017
+  March, 21st, 2017
 .LINK
   http://github.com/rebneth/RobertEbneth.VMware.vSphere.Reporting
 .PARAMETER Minutes
@@ -51,9 +51,15 @@ Begin {
         Write-Error "Function CheckFilePathAndCreate is missing."
         break
     }
-    $AllEvents = @()
-    #$StartTime = "24/10/2016"
+    # If we do not get Cluster from Input, we take them all from vCenter
+	If ( !$Cluster ) {
+		$Cluster_from_Input = (Get-Cluster | Select Name).Name | Sort}
+	  else {
+		$Cluster_from_Input = $CLUSTER
+	}
+    $AllEvents = New-Object System.Collections.ArrayList
     #$EndTime = "25/10/2016"
+    #$StartTime = "24/10/2016"
     $EndTime = Get-Date -Minute 0 -Second 0
 	$StartTime = $EndTime.AddMinutes(-$($minutes))
 
@@ -71,35 +77,34 @@ Process {
 	# Main #
 	########
 	
+	foreach ( $Cluster in $Cluster_from_input ) {
 	$status = Get-Cluster $Cluster
     If ( $? -eq $false ) {
 		Write-Host "Error: Required Cluster $($Cluster) does not exist." -ForegroundColor Red
 		break
     }
-
-    $headline = "" | Select ObjectName, CreatedTime, EventTypeId, FullFormattedMessage
-    $headline.ObjectName = "### Cluster: $($Cluster) ###"
-    $AllEvents += $headline
     $ALL_CLUSTER_HOSTS = Get-Cluster -Name $Cluster | Get-VMHost | Sort-Object Name
     
     foreach ( $clusterhost in $ALL_CLUSTER_HOSTS) {
         Write-Host "Collecting VI Events for ESXi Host $($clusterhost)..."
-	    $HostEvents = @()
-	    $headline = "" | Select ObjectName, CreatedTime, EventTypeId, FullFormattedMessage
-	    $headline.ObjectName = "### $clusterhost.Name ###"
-	    $AllEvents += $headline
 	    $HostEvents = Get-VIEvent -Entity $clusterhost.Name -Start $StartTime -Finish $EndTime | select ObjectName, CreatedTime, EventTypeId, FullFormattedMessage
-	    foreach ( $event in $HostEvents ) {
-	     if ( -not $event.ObjectName -eq $clusterhost.Name ) {$event.ObjectName = $clusterhost.Name}
-	     $AllEvents += $event
-	    }
-	}
+	    $EventsExtended = foreach ( $event in $HostEvents ) {
+                Select -InputObject $event -Property @{N="Clustername";E={$Cluster}},
+                    # for some events the ObjectName is empty, so we declare this property always to $clusterhost.Name
+                    @{N="Hostname";E={$clusterhost.Name}},
+                    @{N="CreatedTime";E={$event.CreatedTime}},
+                    @{N="EventTypeId";E={$event.EventTypeId}},
+                    @{N="FullFormattedMessage";E={$event.FullFormattedMessage}}
+                } ### End Foreach event
+        [void] $AllEvents.AddRange($EventsExtended)
+	} ### End Foreach Clusterhost
+    } ### End Foreach Cluster
 
 } ### End Process
 	
 End {
 	Write-Host "Writing File $($FILENAME)..."
-    $AllEvents | Select ObjectName, CreatedTime, EventTypeId, FullFormattedMessage | Export-Csv -Delimiter ";" "$OUTPUTFILENAME" -noTypeInformation
+    $AllEvents | Select Clustername, Hostname, CreatedTime, EventTypeId, FullFormattedMessage | Export-Csv -Delimiter ";" "$OUTPUTFILENAME" -noTypeInformation
 	} ## End End
 
  } ### End Function
@@ -107,8 +112,8 @@ End {
 # SIG # Begin signature block
 # MIIFmgYJKoZIhvcNAQcCoIIFizCCBYcCAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUdF93bmNXC7Cf9jfSHxsbjrH8
-# y8OgggMmMIIDIjCCAgqgAwIBAgIQPWSBWJqOxopPvpSTqq3wczANBgkqhkiG9w0B
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUezvm4dpvZpEUDMmA+QtRiktE
+# +TagggMmMIIDIjCCAgqgAwIBAgIQPWSBWJqOxopPvpSTqq3wczANBgkqhkiG9w0B
 # AQUFADApMScwJQYDVQQDDB5Sb2JlcnRFYm5ldGhJVFN5c3RlbUNvbnN1bHRpbmcw
 # HhcNMTcwMjA0MTI0NjQ5WhcNMjIwMjA1MTI0NjQ5WjApMScwJQYDVQQDDB5Sb2Jl
 # cnRFYm5ldGhJVFN5c3RlbUNvbnN1bHRpbmcwggEiMA0GCSqGSIb3DQEBAQUAA4IB
@@ -128,11 +133,11 @@ End {
 # MIIB2gIBATA9MCkxJzAlBgNVBAMMHlJvYmVydEVibmV0aElUU3lzdGVtQ29uc3Vs
 # dGluZwIQPWSBWJqOxopPvpSTqq3wczAJBgUrDgMCGgUAoHgwGAYKKwYBBAGCNwIB
 # DDEKMAigAoAAoQKAADAZBgkqhkiG9w0BCQMxDAYKKwYBBAGCNwIBBDAcBgorBgEE
-# AYI3AgELMQ4wDAYKKwYBBAGCNwIBFTAjBgkqhkiG9w0BCQQxFgQUZnURYDOJtIXw
-# cWDpY+V++QsucT0wDQYJKoZIhvcNAQEBBQAEggEAT2gBUnr/FL6HXRACCmNmtcPz
-# waPtJnBEZaor8E1IdTMFYI+m6hHRyAX9Ylrdlwu1u7ntgy25a9WAc97xrzEMwT3h
-# pMYLaf2M7/Q2j4dGkXs378Rvp+WEBTOaqLa6L1YToJRCpNrHQ0EaIs8k/F80a7i6
-# CFBhpZp8yF+qCon/8wC9dbSxwSLrZtWLgYjqCcppHCsk1pIEk/lowqv3I2Mu8coC
-# 2ws/tNehxXcVV8W5jx5ZZja/9dwS3gSjREwttL2gVNJVEITLLvxSDQrQvPe3aJ0p
-# m/DX/clrHRK+BaZPUk/XH1pO47DLkGbPzlEUd2zHVU76Q83XCkn0h8zp/xMS9A==
+# AYI3AgELMQ4wDAYKKwYBBAGCNwIBFTAjBgkqhkiG9w0BCQQxFgQUBP5n8zp+MUVO
+# B7E9x0ww/3+64MswDQYJKoZIhvcNAQEBBQAEggEAHl+1FG2mVFx8gutgBgkZmbm7
+# yEKHtO8hL12Rqz80gjLjt7B5q9nPnl8hdHtoACXgXs4dHxqFJqioGUJaoWWxjGw0
+# dWS6z2UqK9swgPCJ2OKMv9UKRs4I+eRtjdCeuibpFkHZvOyOeIICxHEpaRSamJtA
+# mTzeZgosZbW8hJIqojSlkAWTWR3Mu8HABenF98EJPbMQFA60qq4QBpbmAzffKlgs
+# OqLq1dEoa0auuiZVW4LwaQmjFZoyQgXoHooDE/5lwhdll9NgAgpt2ZUH7CvBoO/a
+# Ra1J95jXfSCV2iZOg58zV5Z60rVXndj7ox2fBW8j7bouQf2MkKyZDON9TzFhwQ==
 # SIG # End signature block

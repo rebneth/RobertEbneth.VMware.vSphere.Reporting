@@ -5,9 +5,9 @@
 .DESCRIPTION
   The function will export the ESXi server's Scratch Location.
 .NOTES
-  Release 1.1
+  Release 1.2
   Robert Ebneth
-  February, 14th, 2017
+  April, 21st, 2017
 .LINK
   http://github.com/rebneth/RobertEbneth.VMware.vSphere.Reporting
 .PARAMETER Cluster
@@ -69,10 +69,15 @@ Process {
             $ESXCli = Get-EsxCli -VMHost $vmhost.Name
 			$MountedFS = $ESXCli.storage.filesystem.list() | select VolumeName, UUID, MountPoint, Type, Size, Free
             $ScratchFS = $MountedFS | ?{ $HostConfig.ScratchLocation  -Like "$($_.Mountpoint)*" }
-            $HostConfig.Datastore = $ScratchFS.VolumeName
+            $HostConfig.Datastore = $ScratchFS.VolumeNameEx
             $HostConfig.Type = $ScratchFS.Type
-            $HostConfig.SizeMB = [Math]::Round(($ScratchFS.Size/1024/1024), 0)
-            $HostConfig.FreeMB = [Math]::Round(($ScratchFS.Free/1024/1024), 0)
+            #$HostConfig.SizeMB = [Math]::Round(($ScratchFS.Size/1024/1024), 0)
+            #$HostConfig.FreeMB = [Math]::Round(($ScratchFS.Free/1024/1024), 0)
+            # We add a thousands seperator
+            # Used seperator depends on culture settings that canbe verified by
+            # (Get-Culture).NumberFormat.NumberGroupSeparator
+            $HostConfig.SizeMB = [string]::Format('{0:N0}',([Math]::Round(($ScratchFS.Size/1024/1024), 0)))
+            $HostConfig.FreeMB = [string]::Format('{0:N0}',([Math]::Round(($ScratchFS.Free/1024/1024), 0)))
             $report+=$HostConfig
         } ### Foreach ESXi Host
     } ### End Foreach Cluster
@@ -80,7 +85,7 @@ Process {
 
 End {
     Write-Host "Writing ESXi scratch info to file $($OUTPUTFILENAME)..."
-    $report | Export-csv -Delimiter ";" $OUTPUTFILENAME -noTypeInformation
+    $report | Export-csv -Delimiter ";" $OUTPUTFILENAME -Encoding UTF8 -noTypeInformation
     $report | FT -AutoSize
 } ### End End
 
@@ -88,8 +93,8 @@ End {
 # SIG # Begin signature block
 # MIIFmgYJKoZIhvcNAQcCoIIFizCCBYcCAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUIUJwNtwHxLi1gRXA7PrG5d3s
-# Ro+gggMmMIIDIjCCAgqgAwIBAgIQPWSBWJqOxopPvpSTqq3wczANBgkqhkiG9w0B
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUjvD1SaLBi7f4JIlKLnJ9east
+# ORSgggMmMIIDIjCCAgqgAwIBAgIQPWSBWJqOxopPvpSTqq3wczANBgkqhkiG9w0B
 # AQUFADApMScwJQYDVQQDDB5Sb2JlcnRFYm5ldGhJVFN5c3RlbUNvbnN1bHRpbmcw
 # HhcNMTcwMjA0MTI0NjQ5WhcNMjIwMjA1MTI0NjQ5WjApMScwJQYDVQQDDB5Sb2Jl
 # cnRFYm5ldGhJVFN5c3RlbUNvbnN1bHRpbmcwggEiMA0GCSqGSIb3DQEBAQUAA4IB
@@ -109,11 +114,11 @@ End {
 # MIIB2gIBATA9MCkxJzAlBgNVBAMMHlJvYmVydEVibmV0aElUU3lzdGVtQ29uc3Vs
 # dGluZwIQPWSBWJqOxopPvpSTqq3wczAJBgUrDgMCGgUAoHgwGAYKKwYBBAGCNwIB
 # DDEKMAigAoAAoQKAADAZBgkqhkiG9w0BCQMxDAYKKwYBBAGCNwIBBDAcBgorBgEE
-# AYI3AgELMQ4wDAYKKwYBBAGCNwIBFTAjBgkqhkiG9w0BCQQxFgQUnZRHQWJcmXFk
-# uoszMHHBC67HfxwwDQYJKoZIhvcNAQEBBQAEggEAOanasNYKEMmiKRSsUg+Is8iX
-# 8vV8+P822IMY9Me7/3fWAiP1xkYSCTa8iqJYrjQ4dxEgBzf5LUxDbsvDb+mU9Pp/
-# gvk/EmbodN4QhUihM+bmWQBL8hsrRJfFUtBvyDaWcPXJPvZfA5yX0iXCLmNDjDTT
-# 9oYVWmmzq0SSaaLQ0JF65SQ8lrQ9nQytZL6kWZWYOtdTbUHfZGsCKCSF29RzVSLn
-# dbY99QLMIZGoQD6Dvx3tM7UfSHmtfAWl5SYG6kXrcwMd326OuWaQGvVwFYwEBSa0
-# GZJvGZ+YfZxkvYVUNmuW9KGioDwZ5GVzb/hzE+TA1rV4A90x5DMjAmjFJRlJiA==
+# AYI3AgELMQ4wDAYKKwYBBAGCNwIBFTAjBgkqhkiG9w0BCQQxFgQUfAGvmjP+bxWg
+# /E6WiXTDNc5saVswDQYJKoZIhvcNAQEBBQAEggEAWSS/jjryOuzA+WU5tBtt9qAn
+# nF/JKL3kUkl7ZbxTgmGDWAqcPM1UQ+QOaOfrZ5072syiRADPNK4XHJS2aLJZSeZf
+# 3GndzW+vHwyGPiW6VTFVUBIBLxaHgMOVIe7mow9b95kT07Ytr9JKdQSwq3GPw93D
+# zMl4vf26wkqLIcpNrrzB2Bdz9c1+oE8wC3aKl0ZxS00jen/0UVp3y9uOd0l1tpo5
+# MfxEC+Cb+WKSoZiKSsKh+BVdRqVLimwMqRgLmBsFMWZRqpRC7pc3+IAbHZLAXU9E
+# 6yJzUVzVfWmPhlBRxwrXtv+hZxiM3ZDOmlFBzHxxUaCvAhv2GViXFRzHs+sOPQ==
 # SIG # End signature block
