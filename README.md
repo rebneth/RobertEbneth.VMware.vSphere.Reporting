@@ -19,5 +19,5 @@ Export-VMHardDiskProps		Exports vmdk properties (location, size...) to a csv fil
 Export-VMNetworkPNICProps	Exports pnic properties from ESXi server to a csv file  
 Export-VMProperties			Exports major important VM Properties to a csv file  
 Get-ESXiScratchLocation		Exports the current ESXi Scratch location to a csv file  
-Get-vCenterLicensing		Gets the registerd vCenter licenses
+Get-vCenterLicensing		Gets the registered vCenter licenses
 Get-VMFilesystemFreespace	Gets VMs with Guest Filesystems that do not have a minimum free space (in percent)  
