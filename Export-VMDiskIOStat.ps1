@@ -26,8 +26,7 @@ Function Export-VMDiskIOStat {
 #>
 
 param(
-    [Parameter(Mandatory = $True, ValueFromPipeline=$true, ValueFromPipelineByPropertyName=$true, Position = 0,
-    HelpMessage = "Enter Name of vCenter Cluster")]
+    [Parameter(Mandatory = $True, ValueFromPipeline=$true, Position = 0)]
     [string]$Cluster,
 	[Parameter(Mandatory = $False)]
 	[Alias("t")]
@@ -95,8 +94,8 @@ End {
 # SIG # Begin signature block
 # MIIFmgYJKoZIhvcNAQcCoIIFizCCBYcCAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUS8valVfRBNHU3Fjzz8DVxod3
-# GvKgggMmMIIDIjCCAgqgAwIBAgIQPWSBWJqOxopPvpSTqq3wczANBgkqhkiG9w0B
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUDlIdcUMeYS8mYzngt+iKXLrT
+# gOigggMmMIIDIjCCAgqgAwIBAgIQPWSBWJqOxopPvpSTqq3wczANBgkqhkiG9w0B
 # AQUFADApMScwJQYDVQQDDB5Sb2JlcnRFYm5ldGhJVFN5c3RlbUNvbnN1bHRpbmcw
 # HhcNMTcwMjA0MTI0NjQ5WhcNMjIwMjA1MTI0NjQ5WjApMScwJQYDVQQDDB5Sb2Jl
 # cnRFYm5ldGhJVFN5c3RlbUNvbnN1bHRpbmcwggEiMA0GCSqGSIb3DQEBAQUAA4IB
@@ -116,11 +115,11 @@ End {
 # MIIB2gIBATA9MCkxJzAlBgNVBAMMHlJvYmVydEVibmV0aElUU3lzdGVtQ29uc3Vs
 # dGluZwIQPWSBWJqOxopPvpSTqq3wczAJBgUrDgMCGgUAoHgwGAYKKwYBBAGCNwIB
 # DDEKMAigAoAAoQKAADAZBgkqhkiG9w0BCQMxDAYKKwYBBAGCNwIBBDAcBgorBgEE
-# AYI3AgELMQ4wDAYKKwYBBAGCNwIBFTAjBgkqhkiG9w0BCQQxFgQUnp1e4W1rZmu/
-# 9a04vX8mx3X9VzkwDQYJKoZIhvcNAQEBBQAEggEAH6ULPXJuiMbv2qVbTdnON2i8
-# 8f+opnnldA3JDStYwb8DAcV+QWRBmIDaWvhBSVpd7ET/6eVXVgx3ImLfM42yMh5y
-# 8qRscKdNZMFZI7DLg9q8JLbSQjlRF2ApycyvJjLHx3SLW51R+fz/qhXoS/BCKGaQ
-# 7UfGwkeka8CTEBmoG3Fx2scjZPjVpcu3dcoELVZzVKPtdpi+OZLSN+eswcFQXvra
-# 5YU5IDF7HB3or+wd7AHMidoIcFR4OfQ1q3eUHIRGg85GxlHTtCKVOI5ENEl0PLU3
-# LVCT5iCpiORndebIXXeb8YfqkGH02QWPSn+p3svLMuWZ/2M1Lepqt3WZMo6ePw==
+# AYI3AgELMQ4wDAYKKwYBBAGCNwIBFTAjBgkqhkiG9w0BCQQxFgQU/3Iw3eTChX1f
+# 9F8CYCcR14r5P0owDQYJKoZIhvcNAQEBBQAEggEAT9tcq0BNhFNUgTynIsIsrbEd
+# O9vCzfAbftbNcBvvqA8VBHFwfH5e4I5eZDson6PEIISfgzX4Dwdzpb6JAhW+4R85
+# 7ROyVNidg6gCBpObJH8w/K1Hdw5fAWnR+lPiaNdr9Yp2OLvKiXOODUrd2qUT4mdA
+# dZWdkQMzzFHdeVIcv0S0v5rDjn89pcIHChZ9axJuLCP6sQFabk4aU2FLn01WmeYf
+# Q0JE1OWYNsHshD1jJ3Qpz/R2F3F0lQoN+3Ivv7p4Xl/hCCuEgIotmHP1LeronKWa
+# 7gqhukRgP+qg32X3WAvKoHI/XmNgGCMcY+Y6hRE0U8FyfGs7S8gSiBjzDxah6Q==
 # SIG # End signature block
