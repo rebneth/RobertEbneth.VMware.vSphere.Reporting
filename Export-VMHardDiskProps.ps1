@@ -8,7 +8,7 @@
 .NOTES
   Release 1.1
   Robert Ebneth
-  February, 14th, 2017
+  July, 12th, 2017
 .LINK
   http://github.com/rebneth/RobertEbneth.VMware.vSphere.Reporting
 .PARAMETER Cluster
@@ -32,21 +32,16 @@ param(
 )
 
 Begin { 
-	# Check and if not loaded add powershell snapin
-	if (-not (Get-PSSnapin VMware.VimAutomation.Core -ErrorAction SilentlyContinue)) {
-		Add-PSSnapin VMware.VimAutomation.Core}
+	# Check and if not loaded add powershell core module
+	if ( !(Get-Module -Name VMware.VimAutomation.Core -ErrorAction SilentlyContinue) ) {
+        	Import-Module VMware.VimAutomation.Core
+	}
 	# We need the common function CheckFilePathAndCreate
     Get-Command "CheckFilePathAndCreate" -errorAction SilentlyContinue | Out-Null
     if ( $? -eq $false) {
         Write-Error "Function CheckFilePathAndCreate is missing."
         break
     }
-	# If we do not get Cluster from Input, we take them all from vCenter
-	If ( !$Cluster ) {
-		$Cluster_from_Input = (Get-Cluster | Select Name).Name | Sort}
-	  else {
-		$Cluster_from_Input = $CLUSTER
-	}
 	$OUTPUTFILENAME = CheckFilePathAndCreate "$FILENAME"
     $report = @()
 } ### End Begin
@@ -57,7 +52,14 @@ Process {
     # Main #
     ########
 
-	foreach ( $Cluster in $Cluster_from_input ) {
+    # If we do not get Cluster from Input, we take them all from vCenter
+	If ( !$Cluster ) {
+		$Cluster_to_process = (Get-Cluster | Select Name).Name | Sort}
+	  else {
+		$Cluster_to_process = $CLUSTER
+	}
+    
+	foreach ( $Cluster in $Cluster_to_process ) {
  	$status = Get-Cluster $Cluster
     If ( $? -eq $false ) {
 		Write-Host "Error: Required Cluster $($Cluster) does not exist." -ForegroundColor Red
@@ -102,8 +104,8 @@ End {
 # SIG # Begin signature block
 # MIIFmgYJKoZIhvcNAQcCoIIFizCCBYcCAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUwvkFGQjLf1UBaVo+E9WZF0xI
-# FRKgggMmMIIDIjCCAgqgAwIBAgIQPWSBWJqOxopPvpSTqq3wczANBgkqhkiG9w0B
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUEiD+Vz+fd8Sdc9QOEXT0gk3E
+# QKKgggMmMIIDIjCCAgqgAwIBAgIQPWSBWJqOxopPvpSTqq3wczANBgkqhkiG9w0B
 # AQUFADApMScwJQYDVQQDDB5Sb2JlcnRFYm5ldGhJVFN5c3RlbUNvbnN1bHRpbmcw
 # HhcNMTcwMjA0MTI0NjQ5WhcNMjIwMjA1MTI0NjQ5WjApMScwJQYDVQQDDB5Sb2Jl
 # cnRFYm5ldGhJVFN5c3RlbUNvbnN1bHRpbmcwggEiMA0GCSqGSIb3DQEBAQUAA4IB
@@ -123,11 +125,11 @@ End {
 # MIIB2gIBATA9MCkxJzAlBgNVBAMMHlJvYmVydEVibmV0aElUU3lzdGVtQ29uc3Vs
 # dGluZwIQPWSBWJqOxopPvpSTqq3wczAJBgUrDgMCGgUAoHgwGAYKKwYBBAGCNwIB
 # DDEKMAigAoAAoQKAADAZBgkqhkiG9w0BCQMxDAYKKwYBBAGCNwIBBDAcBgorBgEE
-# AYI3AgELMQ4wDAYKKwYBBAGCNwIBFTAjBgkqhkiG9w0BCQQxFgQUWYELaP2sXZ68
-# YlzkWapH1nTFJaowDQYJKoZIhvcNAQEBBQAEggEAHIOguPxi0oDigfuvfy0ilW2K
-# E2pNi0VDH6VoCq1BUhvTbVjzL1b1rNSmg1BGpvBSs2uqEQq1eTcwIEWgzgSIK4gB
-# 740sdlmz0vmfu030WZiPkQDnwkwEQHEsApM8mL0TFGPSre1yijEx9A8e8THX1Y0+
-# Zs8X+WjPM5/kfRstfnLE3CEw+RCkO9NYROnlfYbrbKHvHJW2xuY0RCaDZ8VN8q5G
-# rET6G0fUDyEEDX6y2xGvrPfblxppM3Gc7r31GcYr4LXEJsyt1xQGehc1vRwDQ8gF
-# Q+LiUFvhA6QmaLSQfkvLXIgg8psa6qUEniqDMbHMYk8l2jqhGwA1gFvC2Lm1lQ==
+# AYI3AgELMQ4wDAYKKwYBBAGCNwIBFTAjBgkqhkiG9w0BCQQxFgQU9brLdBBtdqle
+# 4gWeOKApEY/GNYwwDQYJKoZIhvcNAQEBBQAEggEAZAaVEyNgC3korCyYMceetPA2
+# 3J61/H1SR+ZppwIQ9t10x35+ukun4LrnwSRWzMHoQqBT7gzwZL7tJbTlQLlVbD4D
+# e5pucGsi6uzG7r1YyTO3vvoG3rfnk0my9LcK/cRhrIAUs9qHCJAHzj15fI07X+vz
+# rzk7mR7eqaBpcXkDKl3DJXzFhbCwQOxMnrVSxtJNitUVl6NkUYUUuBp8lh/9zYQ2
+# iRQ6LMgmDvzQGkl1Eprm0i2SH9uRFHmqC3NS0nevQUV92xN91+J/tIiyl2zLRrPw
+# XhtcGKTUEePTu9t7i4ZKVd+T/tlo3QYSR9qsh7ZJFVEvsSoCKbi8B8bhcU7wbA==
 # SIG # End signature block

@@ -5,9 +5,9 @@ function Export-iSCSISettings {
 .DESCRIPTION
   The function will export iSCSISettings from vCenter Server and add them to a CSV file.
 .NOTES
-  Release 1.1
+  Release 1.2
   Robert Ebneth
-  February, 14th, 2017
+  July, 12th, 2017
 .LINK
   http://github.com/rebneth/RobertEbneth.VMware.vSphere.Reporting
 .PARAMETER Cluster
@@ -22,7 +22,7 @@ function Export-iSCSISettings {
 
 [CmdletBinding()]
 param(
-	[Parameter(Mandatory = $False)]
+	[Parameter(Mandatory = $False, ValueFromPipeline=$true)]
 	[Alias("c")]
 	[string]$CLUSTER,
     [Parameter(Mandatory = $False)]
@@ -31,21 +31,16 @@ param(
 )
 
 Begin {
-	# Check and if not loaded add powershell snapin
-	if (-not (Get-PSSnapin VMware.VimAutomation.Core -ErrorAction SilentlyContinue)) {
-		Add-PSSnapin VMware.VimAutomation.Core}
+	# Check and if not loaded add powershell core module
+	if ( !(Get-Module -Name VMware.VimAutomation.Core -ErrorAction SilentlyContinue) ) {
+        	Import-Module VMware.VimAutomation.Core
+	}
 	# We need the common function CheckFilePathAndCreate
     Get-Command "CheckFilePathAndCreate" -errorAction SilentlyContinue | Out-Null
     if ( $? -eq $false) {
         Write-Error "Function CheckFilePathAndCreate is missing."
         break
     }
-	# If we do not get Cluster from Input, we take them all from vCenter
-	If ( !$Cluster ) {
-		$Cluster_from_Input = (Get-Cluster | Select Name).Name | Sort}
-	  else {
-		$Cluster_from_Input = $CLUSTER
-	}
 	$OUTPUTFILENAME = CheckFilePathAndCreate "$FILENAME"
     $report = @()
 
@@ -60,7 +55,14 @@ Process {
     # Main #
     ########
 
-	foreach ( $Cluster in $Cluster_from_input ) {
+    # If we do not get Cluster from Input, we take them all from vCenter
+	If ( !$Cluster ) {
+		$Cluster_to_process = (Get-Cluster | Select Name).Name | Sort}
+	  else {
+		$Cluster_to_process = $CLUSTER
+	}
+    
+	foreach ( $Cluster in $Cluster_to_process ) {
  	$status = Get-Cluster $Cluster
     If ( $? -eq $false ) {
 		Write-Host "Error: Required Cluster $($Cluster) does not exist." -ForegroundColor Red
@@ -160,8 +162,8 @@ End {
 # SIG # Begin signature block
 # MIIFmgYJKoZIhvcNAQcCoIIFizCCBYcCAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUO9s4rVzW2ttp+RJC7IXzq4Y3
-# tCugggMmMIIDIjCCAgqgAwIBAgIQPWSBWJqOxopPvpSTqq3wczANBgkqhkiG9w0B
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQU5WGRsx7XyOVpOT/FO8auS/GE
+# dVWgggMmMIIDIjCCAgqgAwIBAgIQPWSBWJqOxopPvpSTqq3wczANBgkqhkiG9w0B
 # AQUFADApMScwJQYDVQQDDB5Sb2JlcnRFYm5ldGhJVFN5c3RlbUNvbnN1bHRpbmcw
 # HhcNMTcwMjA0MTI0NjQ5WhcNMjIwMjA1MTI0NjQ5WjApMScwJQYDVQQDDB5Sb2Jl
 # cnRFYm5ldGhJVFN5c3RlbUNvbnN1bHRpbmcwggEiMA0GCSqGSIb3DQEBAQUAA4IB
@@ -181,11 +183,11 @@ End {
 # MIIB2gIBATA9MCkxJzAlBgNVBAMMHlJvYmVydEVibmV0aElUU3lzdGVtQ29uc3Vs
 # dGluZwIQPWSBWJqOxopPvpSTqq3wczAJBgUrDgMCGgUAoHgwGAYKKwYBBAGCNwIB
 # DDEKMAigAoAAoQKAADAZBgkqhkiG9w0BCQMxDAYKKwYBBAGCNwIBBDAcBgorBgEE
-# AYI3AgELMQ4wDAYKKwYBBAGCNwIBFTAjBgkqhkiG9w0BCQQxFgQUXUasKk9fSPB/
-# C5rc1waC0ITgb3AwDQYJKoZIhvcNAQEBBQAEggEAZ9RkFMMLNHqiuBLsWZ9UwAle
-# B3ijlWAZnDN3EGd0gtSDLymf17/r8DngIBKtqHnuZ2xLyhKKEtvlV7VY+jat8fQN
-# nDGzZSA9h8NUdGOPxLh9ARS8r8Z6ffUjNsLlkLmuj5cWTqDKswRDvvsAwBJO2cR4
-# +4RJHooeTb6dMpIxUlJcjS/5Fwc6lt+VIVBGLK/bSnZfF0VW67uN4GidW4PVG/KX
-# 0ZVrW2m5x0uEh4ale1+IYE02ITCXlyT6Z5fBv7V8YwJZLTUACsS2cYeNF2WvCtI+
-# FqHPOWVP6SF1znO9Nbjz6H/D1aYp7YaHHc94KRRpXoYe3pb35nW/gyNxd9DUoA==
+# AYI3AgELMQ4wDAYKKwYBBAGCNwIBFTAjBgkqhkiG9w0BCQQxFgQUVFqYmxsW648x
+# ITooSMSW9UWGnkYwDQYJKoZIhvcNAQEBBQAEggEAe62+vHNyaklEOg2KYk20EI4M
+# zwLXqogaJpi7mU1C7Ba+7uZXyBJ0NZTBPiGd4Mr3DDKQ32lIxG/w/pT3YOmGn8J4
+# dshMZN/hEEdIZs21knYWAH6z5cUgB2OTNT6xOAp/uG6er2wTJkDye0g1I+JxFK87
+# E50LFtY9AEhQn+xz83sjOZPNKLOiDJltMg1toY9zsrtz88PkrJNcArvgNQbjOCsD
+# XESk6qoQCgcThkz1Iox+900ba5BKOyc6oLc2GOJBpccnqdNxsk9+0KZBNDo1Dbyj
+# b6+3mwu38S0q5S1dUl8xgK9B9xpPr6LfHzx6Q4oYKDlu3WwRKyRSTjL8UG1j1w==
 # SIG # End signature block

@@ -5,9 +5,9 @@
 .DESCRIPTION
   The function will export the ESXi server's SW packages releases and add them to a CSV file.
 .NOTES
-  Release 1.2
+  Release 1.3
   Robert Ebneth
-  March, 21st, 2017
+  July, 12th, 2017
 .LINK
   http://github.com/rebneth/RobertEbneth.VMware.vSphere.Reporting
 .PARAMETER Cluster
@@ -22,7 +22,7 @@
 
 [CmdletBinding()]
 param(
-	[Parameter(Mandatory = $False)]
+	[Parameter(Mandatory = $False, ValueFromPipeline=$true)]
 	[Alias("c")]
 	[string]$CLUSTER,
     [Parameter(Mandatory = $False)]
@@ -31,21 +31,16 @@ param(
 )
 
 Begin {
-	# Check and if not loaded add powershell snapin
-	if (-not (Get-PSSnapin VMware.VimAutomation.Core -ErrorAction SilentlyContinue)) {
-		Add-PSSnapin VMware.VimAutomation.Core}
+	# Check and if not loaded add powershell core module
+	if ( !(Get-Module -Name VMware.VimAutomation.Core -ErrorAction SilentlyContinue) ) {
+        	Import-Module VMware.VimAutomation.Core
+	}
 	# We need the common function CheckFilePathAndCreate
     Get-Command "CheckFilePathAndCreate" -errorAction SilentlyContinue | Out-Null
     if ( $? -eq $false) {
         Write-Error "Function CheckFilePathAndCreate is missing."
         break
     }
-	# If we do not get Cluster from Input, we take them all from vCenter
-	If ( !$Cluster ) {
-		$Cluster_from_Input = (Get-Cluster | Select Name).Name | Sort}
-	  else {
-		$Cluster_from_Input = $CLUSTER
-	}
 	$OUTPUTFILENAME = CheckFilePathAndCreate "$FILENAME"
     $report = New-Object System.Collections.ArrayList
     $HostCount = 0
@@ -58,7 +53,14 @@ Begin {
 
 Process {
 
-	foreach ( $Cluster in $Cluster_from_input ) {
+    # If we do not get Cluster from Input, we take them all from vCenter
+	If ( !$Cluster ) {
+		$Cluster_to_process = (Get-Cluster | Select Name).Name | Sort}
+	  else {
+		$Cluster_to_process = $CLUSTER
+	}
+    
+	foreach ( $Cluster in $Cluster_to_process ) {
 	$ClusterInfo = Get-Cluster $Cluster
     If ( $? -eq $false ) {
 		Write-Host "Error: Required Cluster $($Cluster) does not exist." -ForegroundColor Red
@@ -112,8 +114,8 @@ End {
 # SIG # Begin signature block
 # MIIFmgYJKoZIhvcNAQcCoIIFizCCBYcCAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUW/8v2nX+SbFvDscFkt8KAP1R
-# ez2gggMmMIIDIjCCAgqgAwIBAgIQPWSBWJqOxopPvpSTqq3wczANBgkqhkiG9w0B
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUf9L8OcfoZ2m4o5oZfLmraZAL
+# R9+gggMmMIIDIjCCAgqgAwIBAgIQPWSBWJqOxopPvpSTqq3wczANBgkqhkiG9w0B
 # AQUFADApMScwJQYDVQQDDB5Sb2JlcnRFYm5ldGhJVFN5c3RlbUNvbnN1bHRpbmcw
 # HhcNMTcwMjA0MTI0NjQ5WhcNMjIwMjA1MTI0NjQ5WjApMScwJQYDVQQDDB5Sb2Jl
 # cnRFYm5ldGhJVFN5c3RlbUNvbnN1bHRpbmcwggEiMA0GCSqGSIb3DQEBAQUAA4IB
@@ -133,11 +135,11 @@ End {
 # MIIB2gIBATA9MCkxJzAlBgNVBAMMHlJvYmVydEVibmV0aElUU3lzdGVtQ29uc3Vs
 # dGluZwIQPWSBWJqOxopPvpSTqq3wczAJBgUrDgMCGgUAoHgwGAYKKwYBBAGCNwIB
 # DDEKMAigAoAAoQKAADAZBgkqhkiG9w0BCQMxDAYKKwYBBAGCNwIBBDAcBgorBgEE
-# AYI3AgELMQ4wDAYKKwYBBAGCNwIBFTAjBgkqhkiG9w0BCQQxFgQUazZZPNZmNLfj
-# Rg8mX1GzK+NBcKwwDQYJKoZIhvcNAQEBBQAEggEAaksymTJeY/Iskdmrja2hAKLC
-# jNQAHoXs2zj1lUJTq0ZoghNnhVNnkf6/X0EQcDs/22sPIvS5T6K7l2+DhkNBDc0a
-# 7jOtwgSpFA4T1ju6XtcpQm7d1uPC6ssedAjOgY1Cx0qYQ0V5HhdbSSaxw78krRO9
-# sNIG8kp+OVsnVGmp8nT5XeNsgisLCzLXlBRZdX/yr7WxPRRDN84VS1xh7YTB72EJ
-# xtiDkqXyEOpn6Qf9R8jrvXUabspNuDkOOVXSN5Uy4L1UTrIaQf49uVga7PdbaBZT
-# 1O2x0MVaF3XNXmRLPo/ksHGiminQmdoQPEHegKewciVMqg0yuJo4WcNQs7imPA==
+# AYI3AgELMQ4wDAYKKwYBBAGCNwIBFTAjBgkqhkiG9w0BCQQxFgQUBx1Byi7dhMnM
+# 7uzol20gSGceNw8wDQYJKoZIhvcNAQEBBQAEggEAaRCJg5fUMkIbYGbioOQjDjfK
+# ao8EPW8QJTOK046VZw74nhxNmxu7zcYaS/0dHBjAufxGSaO5Pn78dSkHijy4CBWe
+# oa0RomlvoJP7zrvvs1EnKj6XpORxSei3ZSbuII26pmfBkYAdJrNExAtm0y/d5kMb
+# /Ro3xc7vDX4QY9Xve+JHprhg01phe5opsSyWjYq0T/EypEWqO+G/FRXrQmRvpvvf
+# OBn8kA1pvJJmiUy+Fqd9egOH1tjxjqxkZOts6TBjVOOtaqafXlHggKz+bClMJhFr
+# 4OJGXEHFDXIa0ZXdzoGWQwgDyAIa3egNGJvsh6gVmc+85mVjpstydbzs+4u1WA==
 # SIG # End signature block

@@ -5,9 +5,9 @@
 .DESCRIPTION
   The function will create a List of VMs that have Filesystem with less than x percent free space
 .NOTES
-  Release 1.0
+  Release 1.1
   Robert Ebneth
-  May, 11th, 2017
+  July, 12th, 2017
 .LINK
   http://github.com/rebneth/RobertEbneth.VMware.vSphere.Reporting
 .PARAMETER Cluster
@@ -24,8 +24,7 @@
 
 [CmdletBinding()]
 param(
-	[Parameter(Mandatory = $False, ValueFromPipeline=$true, ValueFromPipelineByPropertyName=$true, Position = 0,
-	HelpMessage = "Enter Name of vCenter Cluster")]
+	[Parameter(Mandatory = $False, ValueFromPipeline=$true, Position = 0)]
 	[Alias("c")]
 	[string]$CLUSTER,
 	[Parameter(Mandatory = $False, Position = 1,
@@ -48,12 +47,6 @@ Begin {
         	Write-Error "Function CheckFilePathAndCreate is missing."
         	break
 	}
-	# If we do not get Cluster from Input, we take them all from vCenter
-	If ( !$Cluster ) {
-		$Cluster_from_Input = (Get-Cluster | Select Name).Name | Sort}
-	  else {
-		$Cluster_from_Input = $CLUSTER
-	}
 
 	# Start of Settings 
 	$Starttime = Date
@@ -73,7 +66,14 @@ Process {
 	# Main #
 	########
 	
-	foreach ( $Cluster in $Cluster_from_input ) {
+    # If we do not get Cluster from Input, we take them all from vCenter
+	If ( !$Cluster ) {
+		$Cluster_to_process = (Get-Cluster | Select Name).Name | Sort}
+	  else {
+		$Cluster_to_process = $CLUSTER
+	}
+    
+	foreach ( $Cluster in $Cluster_to_process ) {
 	$status = Get-Cluster $Cluster
     If ( $? -eq $false ) {
 		Write-Host "Error: Required Cluster $($Cluster) does not exist." -ForegroundColor Red
@@ -113,8 +113,8 @@ End {
 # SIG # Begin signature block
 # MIIFmgYJKoZIhvcNAQcCoIIFizCCBYcCAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUcskkwV7Ch5aOdEMWHvn98Y3U
-# o4mgggMmMIIDIjCCAgqgAwIBAgIQPWSBWJqOxopPvpSTqq3wczANBgkqhkiG9w0B
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUYs0WBoHXbFT1eqTeoyWUkoJb
+# lg2gggMmMIIDIjCCAgqgAwIBAgIQPWSBWJqOxopPvpSTqq3wczANBgkqhkiG9w0B
 # AQUFADApMScwJQYDVQQDDB5Sb2JlcnRFYm5ldGhJVFN5c3RlbUNvbnN1bHRpbmcw
 # HhcNMTcwMjA0MTI0NjQ5WhcNMjIwMjA1MTI0NjQ5WjApMScwJQYDVQQDDB5Sb2Jl
 # cnRFYm5ldGhJVFN5c3RlbUNvbnN1bHRpbmcwggEiMA0GCSqGSIb3DQEBAQUAA4IB
@@ -134,11 +134,11 @@ End {
 # MIIB2gIBATA9MCkxJzAlBgNVBAMMHlJvYmVydEVibmV0aElUU3lzdGVtQ29uc3Vs
 # dGluZwIQPWSBWJqOxopPvpSTqq3wczAJBgUrDgMCGgUAoHgwGAYKKwYBBAGCNwIB
 # DDEKMAigAoAAoQKAADAZBgkqhkiG9w0BCQMxDAYKKwYBBAGCNwIBBDAcBgorBgEE
-# AYI3AgELMQ4wDAYKKwYBBAGCNwIBFTAjBgkqhkiG9w0BCQQxFgQU49WysZVimlrz
-# hH7CXiyULwLDyHMwDQYJKoZIhvcNAQEBBQAEggEAVazskhg6XRPEtcPZQcByDRBO
-# 9q8qGo4CJdOd2B1x9/boT4MhAN6jD4QGW6UTjpqjAh0bGijQyqGN/mSpJmBq74l1
-# 2EOS2/TF3xGfOibkQY2ZymQwrW7gZ125PmBvpwOkv46u49UXn1hf8Hs4PgDptvbS
-# ZTKRTVsB4QBTTNX7/JRQEu8GN6CVEQeYcHDEEtXmt0TRL2jjZBS99Wl7aALv0kQM
-# 3+XyyEHxeuO87c5Vn+4JUNmYoHUrIqywWdXCtQkkmV7DZeeUpIZsgYsQYZhtmvXU
-# Z/bM19ACCb60Oj/i0pxrjUvL4u8UyMqMHMc5TfBowG96oyUo5gSuCGUWT4SbdQ==
+# AYI3AgELMQ4wDAYKKwYBBAGCNwIBFTAjBgkqhkiG9w0BCQQxFgQUqc01c1kaDcwQ
+# AC5f7Hv47chyltIwDQYJKoZIhvcNAQEBBQAEggEAQ6xnRaoTZhmWZ6z7DBd7bRmg
+# SFp+hXcbP8M4JMnpnYg/5jjC7BFj9rtkpdKG2gd+l45yr1sT7ahldmbXcsOoGPvm
+# sSC2s/+zg2kMsqulY0JbGPcjX3i8VvCBKzWABdxy2ORW5y6/oq+0psbP6nwz0gGr
+# iuRVrlVbMpzW2Kl73jiPqu6d3R1h4vZAeT+BkaLKXtjGxoL4eXMX2AagHjtuC79D
+# XeoVviwzV/MSBTIGRkzlenPHluybUI0rw0NnheRW3G/5DesK7dJ9TOwntHSun+5C
+# 9tBOBHTegsBWLKACseiyokWoejeUDpNm+AaCgmcSZcvP7skYqQ2X/B77wWHP/w==
 # SIG # End signature block

@@ -6,9 +6,9 @@ function Export-DSMultipathingStatus {
   The function will export the Multipathing Information from SAN Datastores on VMware ESXi Hosts
   from vCenter Server and add them to a CSV file.
 .NOTES
-  Release 1.1
+  Release 1.3
   Robert Ebneth
-  February, 14th, 2017
+  July, 12th, 2017
 .LINK
   http://github.com/rebneth/RobertEbneth.VMware.vSphere.Reporting
 .PARAMETER Cluster
@@ -23,7 +23,7 @@ function Export-DSMultipathingStatus {
 
 [CmdletBinding()]
 param(
-	[Parameter(Mandatory = $False)]
+	[Parameter(Mandatory = $False, ValueFromPipeline=$true)]
 	[Alias("c")]
 	[string]$CLUSTER,
     [Parameter(Mandatory = $False, Position = 0)]
@@ -32,25 +32,19 @@ param(
 )
 
 Begin {
-	# Check and if not loaded add powershell snapin
-	if (-not (Get-PSSnapin VMware.VimAutomation.Core -ErrorAction SilentlyContinue)) {
-		Add-PSSnapin VMware.VimAutomation.Core}
+	# Check and if not loaded add powershell core module
+	if ( !(Get-Module -Name VMware.VimAutomation.Core -ErrorAction SilentlyContinue) ) {
+        	Import-Module VMware.VimAutomation.Core
+	}
 	# We need the common function CheckFilePathAndCreate
     Get-Command "CheckFilePathAndCreate" -errorAction SilentlyContinue | Out-Null
     if ( $? -eq $false) {
         Write-Error "Function CheckFilePathAndCreate is missing."
         break
     } 
-	# If we do not get Cluster from Input, we take them all from vCenter
-	If ( !$Cluster ) {
-		$Cluster_from_Input = (Get-Cluster | Select Name).Name | Sort}
-	  else {
-		$Cluster_from_Input = $CLUSTER
-	}
 	$OUTPUTFILENAME = CheckFilePathAndCreate "$FILENAME"
     $datastore = get-datastore | ?{$_.Name -notlike "*local"}
-    $reportLunPathState = @()
-    $report = @()
+    $report = New-Object System.Collections.ArrayList
 
 } ### End Begin
 
@@ -60,7 +54,14 @@ Process {
     # Main #
     ########
 
-	foreach ( $Cluster in $Cluster_from_input ) {
+    # If we do not get Cluster from Input, we take them all from vCenter
+	If ( !$Cluster ) {
+		$Cluster_to_process = (Get-Cluster | Select Name).Name | Sort}
+	  else {
+		$Cluster_to_process = $CLUSTER
+	}
+    
+	foreach ( $Cluster in $Cluster_to_process ) {
  	    $status = Get-Cluster $Cluster
         If ( $? -eq $false ) {
 		    Write-Host "Error: Required Cluster $($Cluster) does not exist." -ForegroundColor Red
@@ -78,7 +79,7 @@ Process {
             ForEach ($VMHostScsiLun in $VMHostScsiLuns) {
 		        $DevPathInfo = "" | select ClusterName, HostName, Datastorename, Vendor, Model, SerialNumber, ScsiCanonicalName, HBA_WWPN, RuntimeName, SizeGB, PathCount, ActivePathCount, BrokenPathCount, DisabledPathCount, Storage_Target_Port_Adress, PathState, Multipathing, PathSelectionPolicy, StorageArrayType, CommandsToSwitchPath, BlocksToSwitchPath, QueueDepth
 		        $VMHostScsiLunPaths = $VMHostScsiLun | Get-ScsiLunPath
-		        $AllPathInfo =@()
+                $AllPathInfo = New-Object System.Collections.ArrayList
 		        $ActivePathCount = 0
 		        $BrokenPathCount = 0
 		        $DisabledPathCount = 0
@@ -90,6 +91,9 @@ Process {
 		    	    $PathInfo.ClusterName = $cluster
 			        $PathInfo.HostName = $VMHost.Name
 			        $PathInfo.Datastorename = $datastore | Where-Object {($_.extensiondata.info.vmfs.extent | %{$_.diskname}) -contains $VMHostScsiLun.CanonicalName}|select -expand name
+                    $PathInfo.Vendor = ""
+                    $PathInfo.Model = ""
+                    $PathInfo.SerialNumber = ""
 			        $PathInfo.ScsiCanonicalName = $VMHostScsiLun.CanonicalName
 			        $PathInfo.RuntimeName = $LunPath.RuntimeName
 			        $string = $LunPath.AdapterTransportDetails
@@ -103,6 +107,8 @@ Process {
 			          ELSE {
 			  	        $PathInfo.Storage_Target_Port_Adress = $string}	
 			        $PathInfo.PathState = $LunPath.State
+                    $PathInfo.SizeGB = ""
+		            $PathInfo.PathCount = ""
 			        switch ($LunPath.state) 
     			        { 
         		        active {$ActivePathCount++; $PathInfo.ActivePathCount = "1"}
@@ -110,7 +116,13 @@ Process {
 				        disabled {$DisabledPathCount++; $PathInfo.DisabledPathCount = "1"}
                         default {"N/A"}
 				        }
-			        $AllPathInfo += $PathInfo
+			        $PathInfo.Multipathing = ""
+                    $PathInfo.PathSelectionPolicy = ""
+		            $PathInfo.StorageArrayType = ""
+                    $PathInfo.CommandsToSwitchPath = ""
+                    $PathInfo.BlocksToSwitchPath = ""
+                    $PathInfo.QueueDepth = ""
+                    [void] $AllPathInfo.Add($PathInfo)
 		        }
                 # $DevPathInfo is the headline for each detected storage device
 		        $DevPathInfo.ClusterName = $cluster
@@ -137,11 +149,11 @@ Process {
 		        $DevPathInfo.BrokenPathCount = $BrokenPathCount
 		        $DevPathInfo.DisabledPathCount = $DisabledPathCount
 		        $DevPathInfo.Storage_Target_Port_Adress = ""
-		        $DevPathInfo.PathState = ""
+		        $DevPathInfo.PathState = "x"
 		        $DevPathInfo.PathSelectionPolicy = $NMPInfoPerDevice.PathSelectionPolicy
 		        $DevPathInfo.StorageArrayType = $NMPInfoPerDevice.StorageArrayType
-		        $reportLunPathState += $DevPathInfo
-		        $reportLunPathState += $AllPathInfo
+                [void] $report.Add($DevPathInfo)
+                [void] $report.AddRange($AllPathInfo)
             } ### End Foreach SCSI Lun
         } ### End Foreach ESXi Host
     } ### End Foreach Cluster
@@ -149,15 +161,16 @@ Process {
 
 End {
     Write-Host "Writing Outputfile $($OUTPUTFILENAME)..."
-    $reportLunPathState | Export-csv -Delimiter ";" $OUTPUTFILENAME -noTypeInformation
+    $report | Export-csv -Delimiter ";" $OUTPUTFILENAME -Encoding UTF8 -UseCulture -noTypeInformation
+    Get-Date
 } ### End End
 
 } ### End function
 # SIG # Begin signature block
 # MIIFmgYJKoZIhvcNAQcCoIIFizCCBYcCAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUTjS0xqxCp3u4GrBHFGxiew4o
-# 5AKgggMmMIIDIjCCAgqgAwIBAgIQPWSBWJqOxopPvpSTqq3wczANBgkqhkiG9w0B
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUNkMwfgTUPaIg/6Jl2ocjweCZ
+# LpWgggMmMIIDIjCCAgqgAwIBAgIQPWSBWJqOxopPvpSTqq3wczANBgkqhkiG9w0B
 # AQUFADApMScwJQYDVQQDDB5Sb2JlcnRFYm5ldGhJVFN5c3RlbUNvbnN1bHRpbmcw
 # HhcNMTcwMjA0MTI0NjQ5WhcNMjIwMjA1MTI0NjQ5WjApMScwJQYDVQQDDB5Sb2Jl
 # cnRFYm5ldGhJVFN5c3RlbUNvbnN1bHRpbmcwggEiMA0GCSqGSIb3DQEBAQUAA4IB
@@ -177,11 +190,11 @@ End {
 # MIIB2gIBATA9MCkxJzAlBgNVBAMMHlJvYmVydEVibmV0aElUU3lzdGVtQ29uc3Vs
 # dGluZwIQPWSBWJqOxopPvpSTqq3wczAJBgUrDgMCGgUAoHgwGAYKKwYBBAGCNwIB
 # DDEKMAigAoAAoQKAADAZBgkqhkiG9w0BCQMxDAYKKwYBBAGCNwIBBDAcBgorBgEE
-# AYI3AgELMQ4wDAYKKwYBBAGCNwIBFTAjBgkqhkiG9w0BCQQxFgQUZHfEHAJfvSc+
-# w9ycTHaauxHdou4wDQYJKoZIhvcNAQEBBQAEggEAmaR9H4/7BBZ0eEd/oNdergw2
-# kQfhqzgr291WUAG6gle18NP/WXp/aXT0Te+K8zXrP/OGTDi+2Zghl+P2Dt2sdzqj
-# Y8ATBtlNgaXtAFKTe3geuGmjUdblIP/Fq+StF2ia7//k+gMp4OhdDCgXTg7cg99U
-# clpSdBvGcW0BsHjmmX8bWJg6BJzM4xzk7rj9/RU4XD1+PqER0oWSX+VdsbkKvc3/
-# JZMefJ/wfMLKhE7s/B6/i1L3YZKeGs/57/4CrzR0bd30nl3UarvcxHeKDdhX5bxe
-# eK7rrsCIxyHWEnyZBZ/WqDj+7IN2EjqIBs78j77sklr+9VkNHCx2hCKWkdwWiA==
+# AYI3AgELMQ4wDAYKKwYBBAGCNwIBFTAjBgkqhkiG9w0BCQQxFgQUrevoInwL9+1u
+# /nKSSO2RZJ9aqmYwDQYJKoZIhvcNAQEBBQAEggEAIEuCkJ2o4UB0UyEnIgSomEF2
+# gKtTmOVOJ5C/9ymhgeoSl/Z4slHSyttZo03BAsCMp8tFrinz0pxiU7UB++SVndzU
+# vB65cJ0msx5z+RaP7sHwI78ZQoYvDA1YmgFWNEtbxWStIkpUEfIHTo6OKGNAYDHQ
+# tMkJLgUN8ZEWtj2AQKcE5AA0pk5rL7gKOhKIyMitYv5PrsCH7eM5Z57WpCda1qIz
+# kHFT+/GSiDfuNqvJJkF4DQRAZpYWZLCjcT0lmAZ6fXj3PF8+NdVHBzFR731k0fMa
+# Pkmvi5ukp/0oQXsbm7gkLJmqRjXVA6DmkSv9eKwYUUgSU8ooWbqwLrVc0uA8NA==
 # SIG # End signature block

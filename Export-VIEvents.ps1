@@ -6,9 +6,9 @@ function Export-VIEvents {
   The function will export the Events from vSphere Environment
   and add them to a CSV file.
 .NOTES
-  Release 1.2
+  Release 1.3
   Robert Ebneth
-  March, 21st, 2017
+  July, 12th, 2017
 .LINK
   http://github.com/rebneth/RobertEbneth.VMware.vSphere.Reporting
 .PARAMETER Minutes
@@ -28,8 +28,7 @@ function Export-VIEvents {
 
 [CmdletBinding()]
 param(
-	[Parameter(Mandatory = $True, ValueFromPipeline=$true, ValueFromPipelineByPropertyName=$true, Position = 0,
-	HelpMessage = "Enter Name of vCenter Cluster")]
+	[Parameter(Mandatory = $False, ValueFromPipeline=$true, Position = 0)]
 	[Alias("c")]
 	[string]$CLUSTER,
 	[Parameter(Mandatory = $False, Position = 1,
@@ -42,21 +41,16 @@ param(
 )
 
 Begin {
-	# Check and if not loaded add powershell snapin
-	if (-not (Get-PSSnapin VMware.VimAutomation.Core -ErrorAction SilentlyContinue)) {
-		Add-PSSnapin VMware.VimAutomation.Core}
+	# Check and if not loaded add powershell core module
+	if ( !(Get-Module -Name VMware.VimAutomation.Core -ErrorAction SilentlyContinue) ) {
+        	Import-Module VMware.VimAutomation.Core
+	}
 	# We need the common function CheckFilePathAndCreate
     Get-Command "CheckFilePathAndCreate" -errorAction SilentlyContinue | Out-Null
     if ( $? -eq $false) {
         Write-Error "Function CheckFilePathAndCreate is missing."
         break
     }
-    # If we do not get Cluster from Input, we take them all from vCenter
-	If ( !$Cluster ) {
-		$Cluster_from_Input = (Get-Cluster | Select Name).Name | Sort}
-	  else {
-		$Cluster_from_Input = $CLUSTER
-	}
     $AllEvents = New-Object System.Collections.ArrayList
     #$EndTime = "25/10/2016"
     #$StartTime = "24/10/2016"
@@ -77,7 +71,14 @@ Process {
 	# Main #
 	########
 	
-	foreach ( $Cluster in $Cluster_from_input ) {
+    # If we do not get Cluster from Input, we take them all from vCenter
+	If ( !$Cluster ) {
+		$Cluster_to_process = (Get-Cluster | Select Name).Name | Sort}
+	  else {
+		$Cluster_to_process = $CLUSTER
+	}
+    
+	foreach ( $Cluster in $Cluster_to_process ) {
 	$status = Get-Cluster $Cluster
     If ( $? -eq $false ) {
 		Write-Host "Error: Required Cluster $($Cluster) does not exist." -ForegroundColor Red
@@ -112,8 +113,8 @@ End {
 # SIG # Begin signature block
 # MIIFmgYJKoZIhvcNAQcCoIIFizCCBYcCAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUezvm4dpvZpEUDMmA+QtRiktE
-# +TagggMmMIIDIjCCAgqgAwIBAgIQPWSBWJqOxopPvpSTqq3wczANBgkqhkiG9w0B
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQU7bhd946QUvkKSibw/jjnAnv5
+# ELCgggMmMIIDIjCCAgqgAwIBAgIQPWSBWJqOxopPvpSTqq3wczANBgkqhkiG9w0B
 # AQUFADApMScwJQYDVQQDDB5Sb2JlcnRFYm5ldGhJVFN5c3RlbUNvbnN1bHRpbmcw
 # HhcNMTcwMjA0MTI0NjQ5WhcNMjIwMjA1MTI0NjQ5WjApMScwJQYDVQQDDB5Sb2Jl
 # cnRFYm5ldGhJVFN5c3RlbUNvbnN1bHRpbmcwggEiMA0GCSqGSIb3DQEBAQUAA4IB
@@ -133,11 +134,11 @@ End {
 # MIIB2gIBATA9MCkxJzAlBgNVBAMMHlJvYmVydEVibmV0aElUU3lzdGVtQ29uc3Vs
 # dGluZwIQPWSBWJqOxopPvpSTqq3wczAJBgUrDgMCGgUAoHgwGAYKKwYBBAGCNwIB
 # DDEKMAigAoAAoQKAADAZBgkqhkiG9w0BCQMxDAYKKwYBBAGCNwIBBDAcBgorBgEE
-# AYI3AgELMQ4wDAYKKwYBBAGCNwIBFTAjBgkqhkiG9w0BCQQxFgQUBP5n8zp+MUVO
-# B7E9x0ww/3+64MswDQYJKoZIhvcNAQEBBQAEggEAHl+1FG2mVFx8gutgBgkZmbm7
-# yEKHtO8hL12Rqz80gjLjt7B5q9nPnl8hdHtoACXgXs4dHxqFJqioGUJaoWWxjGw0
-# dWS6z2UqK9swgPCJ2OKMv9UKRs4I+eRtjdCeuibpFkHZvOyOeIICxHEpaRSamJtA
-# mTzeZgosZbW8hJIqojSlkAWTWR3Mu8HABenF98EJPbMQFA60qq4QBpbmAzffKlgs
-# OqLq1dEoa0auuiZVW4LwaQmjFZoyQgXoHooDE/5lwhdll9NgAgpt2ZUH7CvBoO/a
-# Ra1J95jXfSCV2iZOg58zV5Z60rVXndj7ox2fBW8j7bouQf2MkKyZDON9TzFhwQ==
+# AYI3AgELMQ4wDAYKKwYBBAGCNwIBFTAjBgkqhkiG9w0BCQQxFgQUGcSOYaZCBJk6
+# 8vOJgfK8H0Eh7eEwDQYJKoZIhvcNAQEBBQAEggEAScOv0QqwpgAu0brHipVSOJov
+# EYRLjXUnRTVeMesZ3Zrb3HiRPFNwFDalBHiioFfepsSY8iddmqS9H5NGlSblHQdS
+# CJSks0Gn4rEgPXYQTd9dgi3bBVnO85Wupz4KWpL4eEjyMa0zbbHk3/zZRBs1LLK7
+# lw/Jvr2CV+6ELMPjH1QAhx/XNDaa69hkYOiEdJXji+W+CrYVtKuwmS6GISwEIMsu
+# m/cOJRkZcyIDyvLJ1VGJRPhcqi5kNN0JGdzd7MI6SjFEgp5HrYRmM61/WTo6n8Qs
+# MH0b76bwYDWJNqOcZeeObMQHAo6zWfkmrEPHtcw7nhrNZygY3Nz8wK5j9OfrCw==
 # SIG # End signature block

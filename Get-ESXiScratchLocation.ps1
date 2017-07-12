@@ -5,9 +5,9 @@
 .DESCRIPTION
   The function will export the ESXi server's Scratch Location.
 .NOTES
-  Release 1.2
+  Release 1.4
   Robert Ebneth
-  April, 21st, 2017
+  July, 12th
 .LINK
   http://github.com/rebneth/RobertEbneth.VMware.vSphere.Reporting
 .PARAMETER Cluster
@@ -22,7 +22,7 @@
 
 [CmdletBinding()]
 param(
-	[Parameter(Mandatory = $False)]
+	[Parameter(Mandatory = $False, ValueFromPipeline=$true)]
 	[Alias("c")]
 	[string]$CLUSTER,
     [Parameter(Mandatory = $False)]
@@ -32,28 +32,30 @@ param(
 
 
 Begin {
-	# Check and if not loaded add powershell snapin
-	if (-not (Get-PSSnapin VMware.VimAutomation.Core -ErrorAction SilentlyContinue)) {
-		Add-PSSnapin VMware.VimAutomation.Core}
+	# Check and if not loaded add powershell core module
+	if ( !(Get-Module -Name VMware.VimAutomation.Core -ErrorAction SilentlyContinue) ) {
+        	Import-Module VMware.VimAutomation.Core
+	}
     # We need the common function CheckFilePathAndCreate
     Get-Command "CheckFilePathAndCreate" -errorAction SilentlyContinue | Out-Null
     if ( $? -eq $false) {
         Write-Error "Function CheckFilePathAndCreate is missing."
         break
     }
-	# If we do not get Cluster from Input, we take them all from vCenter
-	If ( !$Cluster ) {
-		$Cluster_from_Input = (Get-Cluster | Select Name).Name | Sort}
-	  else {
-		$Cluster_from_Input = $CLUSTER
-	}
 	$OUTPUTFILENAME = CheckFilePathAndCreate "$FILENAME"
     $report = @()
 } ### End Begin
 
 Process {
 
-	foreach ( $Cluster in $Cluster_from_input ) {
+    # If we do not get Cluster from Input, we take them all from vCenter
+	If ( !$Cluster ) {
+		$Cluster_to_process = (Get-Cluster | Select Name).Name | Sort}
+	  else {
+		$Cluster_to_process = $CLUSTER
+	}
+    
+	foreach ( $Cluster in $Cluster_to_process ) {
 	    $ClusterInfo = Get-Cluster $Cluster
         If ( $? -eq $false ) {
 		    Write-Host "Error: Required Cluster $($Cluster) does not exist." -ForegroundColor Red
@@ -62,14 +64,14 @@ Process {
         $ClusterHosts = Get-Cluster -Name $Cluster | Get-VMHost | Sort Name | Select Name, ExtensionData
         foreach($vmhost in $ClusterHosts) {
             Write-Host "Getting Scratch Location for Host $($vmhost.Name)..."
-            $HostConfig = “” | Select Cluster, HostName, ScratchLocation, Datastore, Type, SizeMB, FreeMB
+            $HostConfig = “” | Select Cluster, HostName, CurrentScratchLocation, Datastore, Type, SizeMB, FreeMB
             $HostConfig.Cluster = $Cluster
             $HostConfig.HostName = $vmhost.Name
-            $HostConfig.ScratchLocation = Get-VMhost -Name $vmhost.Name | Get-AdvancedSetting -Name "ScratchConfig.ConfiguredScratchLocation" | Select-Object -ExpandProperty Value
+            $HostConfig.CurrentScratchLocation = Get-VMhost -Name $vmhost.Name | Get-AdvancedSetting -Name "ScratchConfig.CurrentScratchLocation" | Select-Object -ExpandProperty Value
             $ESXCli = Get-EsxCli -VMHost $vmhost.Name
 			$MountedFS = $ESXCli.storage.filesystem.list() | select VolumeName, UUID, MountPoint, Type, Size, Free
-            $ScratchFS = $MountedFS | ?{ $HostConfig.ScratchLocation  -Like "$($_.Mountpoint)*" }
-            $HostConfig.Datastore = $ScratchFS.VolumeNameEx
+            $ScratchFS = $MountedFS | ?{ $HostConfig.CurrentScratchLocation  -Like "$($_.Mountpoint)*" }
+            $HostConfig.Datastore = $ScratchFS.VolumeName
             $HostConfig.Type = $ScratchFS.Type
             #$HostConfig.SizeMB = [Math]::Round(($ScratchFS.Size/1024/1024), 0)
             #$HostConfig.FreeMB = [Math]::Round(($ScratchFS.Free/1024/1024), 0)
@@ -93,8 +95,8 @@ End {
 # SIG # Begin signature block
 # MIIFmgYJKoZIhvcNAQcCoIIFizCCBYcCAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUjvD1SaLBi7f4JIlKLnJ9east
-# ORSgggMmMIIDIjCCAgqgAwIBAgIQPWSBWJqOxopPvpSTqq3wczANBgkqhkiG9w0B
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQURvWRnsW+95qpTiVQUJlpQLMm
+# TDWgggMmMIIDIjCCAgqgAwIBAgIQPWSBWJqOxopPvpSTqq3wczANBgkqhkiG9w0B
 # AQUFADApMScwJQYDVQQDDB5Sb2JlcnRFYm5ldGhJVFN5c3RlbUNvbnN1bHRpbmcw
 # HhcNMTcwMjA0MTI0NjQ5WhcNMjIwMjA1MTI0NjQ5WjApMScwJQYDVQQDDB5Sb2Jl
 # cnRFYm5ldGhJVFN5c3RlbUNvbnN1bHRpbmcwggEiMA0GCSqGSIb3DQEBAQUAA4IB
@@ -114,11 +116,11 @@ End {
 # MIIB2gIBATA9MCkxJzAlBgNVBAMMHlJvYmVydEVibmV0aElUU3lzdGVtQ29uc3Vs
 # dGluZwIQPWSBWJqOxopPvpSTqq3wczAJBgUrDgMCGgUAoHgwGAYKKwYBBAGCNwIB
 # DDEKMAigAoAAoQKAADAZBgkqhkiG9w0BCQMxDAYKKwYBBAGCNwIBBDAcBgorBgEE
-# AYI3AgELMQ4wDAYKKwYBBAGCNwIBFTAjBgkqhkiG9w0BCQQxFgQUfAGvmjP+bxWg
-# /E6WiXTDNc5saVswDQYJKoZIhvcNAQEBBQAEggEAWSS/jjryOuzA+WU5tBtt9qAn
-# nF/JKL3kUkl7ZbxTgmGDWAqcPM1UQ+QOaOfrZ5072syiRADPNK4XHJS2aLJZSeZf
-# 3GndzW+vHwyGPiW6VTFVUBIBLxaHgMOVIe7mow9b95kT07Ytr9JKdQSwq3GPw93D
-# zMl4vf26wkqLIcpNrrzB2Bdz9c1+oE8wC3aKl0ZxS00jen/0UVp3y9uOd0l1tpo5
-# MfxEC+Cb+WKSoZiKSsKh+BVdRqVLimwMqRgLmBsFMWZRqpRC7pc3+IAbHZLAXU9E
-# 6yJzUVzVfWmPhlBRxwrXtv+hZxiM3ZDOmlFBzHxxUaCvAhv2GViXFRzHs+sOPQ==
+# AYI3AgELMQ4wDAYKKwYBBAGCNwIBFTAjBgkqhkiG9w0BCQQxFgQUt42vmibzxtWs
+# fXsDWHCP/D7gBcowDQYJKoZIhvcNAQEBBQAEggEACRJe1PAYEPo7+x8Fiyl5TZrO
+# ngxAlLKDe1wjo+++6iLuLnBciU1g3IqPcHy9Ldyk6SkGpn3C7Hy6HSvYrFxyicZ/
+# tSG2P+JCt4s/myjE4xs/tnL155Bd50mFoAiBhvueVTqs0JWfKCPUU4kRYLZ8Ougb
+# 7PV2boORTC0XinFl2sJE5i9M4a1/f3McCXDBtsbycRGV7sZdxCPvBXZk9QLtVF0O
+# CivJhEyZY1T3s8Evqns2fPCSh8GzWOtH6uo7efwIrQWZdRrJZ3l2Osey/iF1T4TF
+# iWgMkLpyXuE1LzrRtQl1kRBehnUqSBp6YmSNHk4AQ6lXKSXryBnMygaxEcHtag==
 # SIG # End signature block

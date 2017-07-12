@@ -5,9 +5,9 @@
 .DESCRIPTION
   The function will export the Properties of VMware ESXi Servers from vCenter Server and add them to a CSV file.
 .NOTES
-  Release 1.1
+  Release 1.2
   Robert Ebneth
-  February, 9th, 2017
+  July, 12th, 2017
 .LINK
   http://github.com/rebneth/RobertEbneth.VMware.vSphere.Reporting
 .PARAMETER Filename
@@ -30,9 +30,10 @@ param(
 
 Begin {
 
-	# Check and if not loaded add powershell snapin
-	if (-not (Get-PSSnapin VMware.VimAutomation.Core -ErrorAction SilentlyContinue)) {
-		Add-PSSnapin VMware.VimAutomation.Core}
+	# Check and if not loaded add powershell core module
+	if ( !(Get-Module -Name VMware.VimAutomation.Core -ErrorAction SilentlyContinue) ) {
+        	Import-Module VMware.VimAutomation.Core
+	}
 	# We need the common function CheckFilePathAndCreate
 	Get-Command "CheckFilePathAndCreate" -errorAction SilentlyContinue | Out-Null
 	if ( $? -eq $false) {
@@ -144,8 +145,8 @@ End {
 # SIG # Begin signature block
 # MIIFmgYJKoZIhvcNAQcCoIIFizCCBYcCAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQU8+1HV9MIit8iMQvePX5jLrST
-# XLKgggMmMIIDIjCCAgqgAwIBAgIQPWSBWJqOxopPvpSTqq3wczANBgkqhkiG9w0B
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUVy7A0PREpQQCs2+CYWSmomwY
+# kXCgggMmMIIDIjCCAgqgAwIBAgIQPWSBWJqOxopPvpSTqq3wczANBgkqhkiG9w0B
 # AQUFADApMScwJQYDVQQDDB5Sb2JlcnRFYm5ldGhJVFN5c3RlbUNvbnN1bHRpbmcw
 # HhcNMTcwMjA0MTI0NjQ5WhcNMjIwMjA1MTI0NjQ5WjApMScwJQYDVQQDDB5Sb2Jl
 # cnRFYm5ldGhJVFN5c3RlbUNvbnN1bHRpbmcwggEiMA0GCSqGSIb3DQEBAQUAA4IB
@@ -165,11 +166,11 @@ End {
 # MIIB2gIBATA9MCkxJzAlBgNVBAMMHlJvYmVydEVibmV0aElUU3lzdGVtQ29uc3Vs
 # dGluZwIQPWSBWJqOxopPvpSTqq3wczAJBgUrDgMCGgUAoHgwGAYKKwYBBAGCNwIB
 # DDEKMAigAoAAoQKAADAZBgkqhkiG9w0BCQMxDAYKKwYBBAGCNwIBBDAcBgorBgEE
-# AYI3AgELMQ4wDAYKKwYBBAGCNwIBFTAjBgkqhkiG9w0BCQQxFgQUUDGpNtQyeewB
-# Xg5dp4ByrIog15owDQYJKoZIhvcNAQEBBQAEggEATnIZ91UwlUiD/jLDEMJxUp+W
-# +czXSo1c2a8v178HKOJ7rTcpBgRiE3abMG8f5HKYbAtwwJ7A7+cPzsJGktrRKJ9a
-# sNMdZo1o1L9XX2sj6zBAfffOPDGjFnSWsoCOpOY6js5gDx8vakiGJVlhQdJseKi2
-# C5F6yIimP0wtrOCIeNsgVCsPSfq4DrfYaG9hfVDmEnS/UBcfonx834Xqs0nVunF1
-# Ulz55NNtLeO1mg9heM2IVJFk4yg45RMQe0VLC4k4zKKU9VMATEYdiXTQjStMMkdi
-# RKwpxNp/JF1hP7xM8UWDa7hKs8T22jclcJRraxgxZyXh4F28xbcKRxtIyZzDNA==
+# AYI3AgELMQ4wDAYKKwYBBAGCNwIBFTAjBgkqhkiG9w0BCQQxFgQUN8D0KouUk6Il
+# pKyTEic8auYvEMwwDQYJKoZIhvcNAQEBBQAEggEAgc+TBOWKIG6hbK6ea1FSdi/W
+# n0hVIajN3bfrpQouC0X5zIu7ARGG1UOc9FqYp9eD7WgqQvDpZud/dpbnH1ySxQ5U
+# tKrBEEHF5mJ+8hEgAdg4BZK6nIvQy8wa5OH8m1UHVWYKvL7ZylACAV3sKnWTXB6h
+# tD3CXk+sx/jdpu+tUBknsTkJerzG2NoFbVDkCmK6wyxPEky65lmUCKFLZTCTb4S5
+# 5cwG+/7mld8ETKZ3IedAfaqRIfQDq091wmDk7oyLroxp29GbVLaA+hTzFc5amdK7
+# SDNBrB1wL8KfAtE6tyqRo076MC26e7HG+uTvQJgyWP+VzOKq67Nb0Z2ZQCtOtQ==
 # SIG # End signature block

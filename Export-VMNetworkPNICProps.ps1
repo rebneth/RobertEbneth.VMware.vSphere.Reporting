@@ -19,7 +19,7 @@ function Export-VMNetworkPNICProps {
 #>
 [CmdletBinding()]
 param(
-	[Parameter(Mandatory = $False, Position = 0)]
+	[Parameter(Mandatory = $False, ValueFromPipeline=$true, Position = 0)]
 	[Alias("c")]
 	[string]$CLUSTER,
 	[Parameter(Mandatory = $False, Position = 1)]
@@ -28,19 +28,19 @@ param(
 ) ### End Param
 
 Begin {
+	# Check and if not loaded add powershell core module
+	if ( !(Get-Module -Name VMware.VimAutomation.Core -ErrorAction SilentlyContinue) ) {
+        	Import-Module VMware.VimAutomation.Core
+	}
+	if ( !(Get-Module -Name VMware.VimAutomation.Vds -ErrorAction SilentlyContinue) ) {
+        	Import-Module VMware.VimAutomation.Vds
+	}
     # We need the common function CheckFilePathAndCreate
     Get-Command "CheckFilePathAndCreate" -errorAction SilentlyContinue | Out-Null
     if ( $? -eq $false) {
         Write-Error "Function CheckFilePathAndCreate is missing."
         break
     }
-	Import-Module VMware.VimAutomation.Vds  
-	# If we do not get Cluster from Input, we take them all from vCenter
-	If ( !$Cluster ) {
-		$Cluster_from_Input = (Get-Cluster | Select Name).Name | Sort}
-	  else {
-		$Cluster_from_Input = $CLUSTER
-	}
 	$OUTPUTFILENAME = CheckFilePathAndCreate "$FILENAME"
     $report = New-Object System.Collections.ArrayList
 } ### End Begin
@@ -51,7 +51,14 @@ Process {
     # Main #
     ########
 	
-	foreach ( $Cluster in $Cluster_from_input ) {
+    # If we do not get Cluster from Input, we take them all from vCenter
+	If ( !$Cluster ) {
+		$Cluster_to_process = (Get-Cluster | Select Name).Name | Sort}
+	  else {
+		$Cluster_to_process = $CLUSTER
+	}
+    
+	foreach ( $Cluster in $Cluster_to_process ) {
  	$status = Get-Cluster $Cluster
     If ( $? -eq $false ) {
 		Write-Host "Error: Required Cluster $($Cluster) does not exist." -ForegroundColor Red
@@ -128,8 +135,8 @@ End {
 # SIG # Begin signature block
 # MIIFmgYJKoZIhvcNAQcCoIIFizCCBYcCAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQU4K6zFmOdpU139mUSLqnCec9B
-# 66ugggMmMIIDIjCCAgqgAwIBAgIQPWSBWJqOxopPvpSTqq3wczANBgkqhkiG9w0B
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQU2j0YVrxbEQaGLe301Oc51Db8
+# n4SgggMmMIIDIjCCAgqgAwIBAgIQPWSBWJqOxopPvpSTqq3wczANBgkqhkiG9w0B
 # AQUFADApMScwJQYDVQQDDB5Sb2JlcnRFYm5ldGhJVFN5c3RlbUNvbnN1bHRpbmcw
 # HhcNMTcwMjA0MTI0NjQ5WhcNMjIwMjA1MTI0NjQ5WjApMScwJQYDVQQDDB5Sb2Jl
 # cnRFYm5ldGhJVFN5c3RlbUNvbnN1bHRpbmcwggEiMA0GCSqGSIb3DQEBAQUAA4IB
@@ -149,11 +156,11 @@ End {
 # MIIB2gIBATA9MCkxJzAlBgNVBAMMHlJvYmVydEVibmV0aElUU3lzdGVtQ29uc3Vs
 # dGluZwIQPWSBWJqOxopPvpSTqq3wczAJBgUrDgMCGgUAoHgwGAYKKwYBBAGCNwIB
 # DDEKMAigAoAAoQKAADAZBgkqhkiG9w0BCQMxDAYKKwYBBAGCNwIBBDAcBgorBgEE
-# AYI3AgELMQ4wDAYKKwYBBAGCNwIBFTAjBgkqhkiG9w0BCQQxFgQU/drKyBE7McOy
-# khnCruTcnpGW/QMwDQYJKoZIhvcNAQEBBQAEggEAQvV1+ShHbrvsSrF6oEkvA0qs
-# L1bKEzjKTNcQG5a3e9w5ppPf1DvdDRcUlYqmumHatLST42prMEWEnfa+HGzOuslJ
-# 7m4F/4GT3lHjHfw7MsY4XzbZMzxtIeOx/7Eq1AC33BblVj8Ifzz8kHZRDDLFOsoO
-# MwTvPAzZSqCLIUP0MZwKLCIBciyF3FADo2RM8x/pCs0AMDPvejkzTXyPuL1LcsdD
-# PUm+XtmTLYe0JUwE3k2eieNTOzGdFDawUd6gvUbvShthxryXi1Aa+834JcbMNaVY
-# BfLXze8zEoM+Lbxm+BON112gCmGlPjV0Q3nSlp6HNX6Y/yLDXxL0OhRxODwfZw==
+# AYI3AgELMQ4wDAYKKwYBBAGCNwIBFTAjBgkqhkiG9w0BCQQxFgQU0Fca32DPgZSp
+# fCDneWrEfUJm44cwDQYJKoZIhvcNAQEBBQAEggEAYkOfacqWsBn4eD9jswCioTID
+# 23T/CHWgtSOGgdzemVLwZagAM3KsPUmrJo93gCzeEh3fmRSs0dn2rqb8KTw7ifg/
+# hEgu7eZCXjExpsA0N44dmBUYJoXSkvfEc4gJYwhtZZ5CT7eJFOhX7V3HU5Ug+CPd
+# yMz56soeG+Oiy2v6sh2gVsb86cvfhRhwHsg/zER9aUs0/KxP+bCGG6Jz8kR62v9E
+# EK+hD39DlnKioqODx/e4EU0Ug1nV3A81/VPzog3h56tTdCPqHnz2XS7f/LB3afh6
+# XQWNHaHFe/04MkiPKMmJMldW1zamz865zu0tw0cjjkAX3Zsb+Ye4rvRMVSvthw==
 # SIG # End signature block

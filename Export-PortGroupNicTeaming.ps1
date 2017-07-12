@@ -5,9 +5,9 @@
 .DESCRIPTION
   Creates a csv file with VMware vNetwork Portgroup to vmnic relationship and vSW/vPG properties
 .NOTES
-  Release 1.3
+  Release 1.5
   Robert Ebneth
-  April, 19th, 2017
+  July, 12th, 2017
 .LINK
   http://github.com/rebneth/RobertEbneth.VMware.vSphere.Reporting
 .PARAMETER Cluster
@@ -22,8 +22,7 @@
 
 [CmdletBinding()]
  param(
-    [Parameter(Mandatory = $False, ValueFromPipeline=$true, ValueFromPipelineByPropertyName=$true, Position = 0,
-    HelpMessage = "Enter Name of vCenter Cluster")]
+    [Parameter(Mandatory = $False, ValueFromPipeline=$true, Position = 0)]
     [Alias("c")]
     [string]$CLUSTER,
     [Parameter(Mandatory = $false, Position = 1)]
@@ -32,23 +31,19 @@
 )
 
 Begin {
-	# Check and if not loaded add powershell snapin
-	if (-not (Get-PSSnapin VMware.VimAutomation.Core -ErrorAction SilentlyContinue)) {
-		Add-PSSnapin VMware.VimAutomation.Core}
-	if (!(Get-Module VMware.VimAutomation.Vds -ErrorAction SilentlyContinue )) {
-		Import-Module VMware.VimAutomation.Vds}
+    # Check and if not loaded add Powershell core module
+    if ( !(Get-Module -Name VMware.VimAutomation.Core -ErrorAction SilentlyContinue) ) {
+        Import-Module VMware.VimAutomation.Core
+    }
+    if ( !(Get-Module -Name VMware.VimAutomation.Vds -ErrorAction SilentlyContinue) ) {
+        Import-Module VMware.VimAutomation.Vds
+    }
     # We need the common function CheckFilePathAndCreate
     Get-Command "CheckFilePathAndCreate" -errorAction SilentlyContinue | Out-Null
     if ( $? -eq $false) {
         Write-Error "Function CheckFilePathAndCreate is missing."
         break
     }
-	# If we do not get Cluster from Input, we take them all from vCenter
-	If ( !$Cluster ) {
-		$Cluster_from_Input = (Get-Cluster | Select Name).Name | Sort}
-	  else {
-		$Cluster_from_Input = $CLUSTER
-	}
 	$OUTPUTFILENAME = CheckFilePathAndCreate "$FILENAME"
     $report = @()
 } ### End Begin
@@ -59,7 +54,14 @@ Process {
     # Main #
     ########
 
-	foreach ( $Cluster in $Cluster_from_input ) {
+    # If we do not get Cluster from Input, we take them all from vCenter
+	If ( !$Cluster ) {
+		$Cluster_to_process = (Get-Cluster | Select Name).Name | Sort}
+	  else {
+		$Cluster_to_process = $CLUSTER
+	}
+    
+	foreach ( $Cluster in $Cluster_to_process ) {
  	$status = Get-Cluster $Cluster
     If ( $? -eq $false ) {
 		Write-Host "Error: Required Cluster $($Cluster) does not exist." -ForegroundColor Red
@@ -111,17 +113,16 @@ Process {
                     $PGprops.IP = $vNicTab[$pg.Name].Spec.Ip.IpAddress
                     $PGprops.SubnetMask = $vNicTab[$pg.Name].Spec.Ip.SubnetMask
                     $PGprops.MTU = $vNicTab[$pg.Name].Spec.Mtu
-                    $PGprops.AllowPromiscuous = $vNicTab[$pg.Name].Spec.Policy.Security.AllowPromiscuous
-                    $PGprops.MacChanges = $vNicTab[$pg.Name].Spec.Policy.Security.MacChanges
-                    $PGprops.ForgedTransmits =$vNicTab[$pg.Name].Spec.Policy.Security.ForgedTransmits
-                    $PGprops.Policy = $vNicTab[$pg.Name].Spec.Policy.Nicteaming.Policy
-                    $PGprops.TsoEnabled = $vNicTab[$pg.Name].Spec.TsoEnabled
-                    $PGprops.ShapingEnabled = $vNicTab[$pg.Name].Spec.Spec.Policy.ShapingPolicy.Enabled
-                    $PGprops.AverageBandwidth = $vNicTab[$pg.Name].Spec.Spec.Policy.ShapingPolicy.AverageBandwidth
-                    $PGprops.PeakBandwidth = $vNicTab[$pg.Name].Spec.Spec.Policy.ShapingPolicy.PeakBandwidth
-                    $PGprops.BurstSize = $vNicTab[$pg.Name].Spec.Spec.Policy.ShapingPolicy.BurstSize
                 }
+                $PGprops.AllowPromiscuous = $pg.extensiondata.Spec.Policy.Security.AllowPromiscuous
+                $PGprops.MacChanges = $pg.extensiondata.Spec.Policy.Security.MacChanges
+                $PGprops.ForgedTransmits =$pg.extensiondata.Spec.Policy.Security.ForgedTransmits
                 $PGprops.Policy = $pg.extensiondata.Spec.Policy.Nicteaming.Policy
+                $PGprops.TsoEnabled = $pg.extensiondata.Spec.TsoEnabled
+                $PGprops.ShapingEnabled = $pg.extensiondata.Spec.Policy.ShapingPolicy.Enabled
+                $PGprops.AverageBandwidth = $pg.extensiondata.Spec.Policy.ShapingPolicy.AverageBandwidth
+                $PGprops.PeakBandwidth = $pg.extensiondata.Spec.Policy.ShapingPolicy.PeakBandwidth
+                $PGprops.BurstSize = $pg.extensiondata.Spec.Policy.ShapingPolicy.BurstSize
 				$PGprops.NotifySwitches = $pg.extensiondata.Spec.Policy.Nicteaming.NotifySwitches
 				$PGprops.RollingOrder = $pg.extensiondata.Spec.Policy.Nicteaming.RollingOrder
                 $report += $PGprops				
@@ -142,8 +143,8 @@ Process {
 # SIG # Begin signature block
 # MIIFmgYJKoZIhvcNAQcCoIIFizCCBYcCAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUzl+BUYK/bnjnfyC900nIHFUy
-# WcGgggMmMIIDIjCCAgqgAwIBAgIQPWSBWJqOxopPvpSTqq3wczANBgkqhkiG9w0B
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQU9T6yNRwHd+jUiJXcZ8MF/II3
+# P6GgggMmMIIDIjCCAgqgAwIBAgIQPWSBWJqOxopPvpSTqq3wczANBgkqhkiG9w0B
 # AQUFADApMScwJQYDVQQDDB5Sb2JlcnRFYm5ldGhJVFN5c3RlbUNvbnN1bHRpbmcw
 # HhcNMTcwMjA0MTI0NjQ5WhcNMjIwMjA1MTI0NjQ5WjApMScwJQYDVQQDDB5Sb2Jl
 # cnRFYm5ldGhJVFN5c3RlbUNvbnN1bHRpbmcwggEiMA0GCSqGSIb3DQEBAQUAA4IB
@@ -163,11 +164,11 @@ Process {
 # MIIB2gIBATA9MCkxJzAlBgNVBAMMHlJvYmVydEVibmV0aElUU3lzdGVtQ29uc3Vs
 # dGluZwIQPWSBWJqOxopPvpSTqq3wczAJBgUrDgMCGgUAoHgwGAYKKwYBBAGCNwIB
 # DDEKMAigAoAAoQKAADAZBgkqhkiG9w0BCQMxDAYKKwYBBAGCNwIBBDAcBgorBgEE
-# AYI3AgELMQ4wDAYKKwYBBAGCNwIBFTAjBgkqhkiG9w0BCQQxFgQUrnBOFJjNChOh
-# fEkwpCEje6gr+LkwDQYJKoZIhvcNAQEBBQAEggEAcwRhbMsw/SaHt+31iyw4FRIH
-# 5iQ7vU19Dwfk/gsDB3knvGz0y8sXXfqSmsDwY02SIwq9iv7Rtxwy2/25LTds1R/R
-# fpKMEg1/TgR4f8UE3cTw2JyYKLClZ8FyWwU6yDPpOCfLPA7Zd2U8HCCoOH0SGFCe
-# 0CGyNgsOwOCzfDMEqY05S5VWi8MJ1Sqhsz2QIVTUcMgRS74kWZ+N8iicPQboK7EP
-# NfgEywgpTLOpVfejXJdRsDAUUOcFitXZsM2f28/KkkZ9OmHzTbdrGgMOYDWZTCGQ
-# +cVdzXLnvOIyhmUeYcf3PwXIYw/YsRXMDXcQXOJfAfg7fFWIu4xrAQ9NXVBMRw==
+# AYI3AgELMQ4wDAYKKwYBBAGCNwIBFTAjBgkqhkiG9w0BCQQxFgQUpkvU/lSURv1P
+# UMW8agkuTAZtUq4wDQYJKoZIhvcNAQEBBQAEggEASdmlahvSeif/jVeDrXrRSloG
+# DoD0RfgQV3VdSm7IzwCVclJ/zxzH+b7MZj0hWMTPCjpxIAC2dpp12d/ysq1TW8AS
+# vX7ht+K+/9DA7GdyW6Ey/aYkTL4XLYVrVyo96j4RgSqQBqw9p3S9gAGxOv6QSYpS
+# rVZVmc37JMm3wJ7KW8S5huEInaf+MGr3CCV//ublMrA/zi9IsDiHlIqNUNBkd4nf
+# 9k5oA7LeZcFF4FgB6IaIfQ458N6bNHSP8fAOAr55g8KZOMADFJmPs5CXAL0uE5hG
+# JXQg1LlywjvseDLyU8EZgtIfCvke0sL088QMsKX+IYzfFmpfu4jtDdV7bH8mkQ==
 # SIG # End signature block

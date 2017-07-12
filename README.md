@@ -3,7 +3,9 @@
 **VMware Reporting Powershell Module and Scripts
 used for VMware Health Check and documentation**
 
-Latest Update: May, 11th, 2017
+Latest Update: July, 12th, 2017
+Notes: Compatibility with PowerCLI  
+       Bugfix in pipeline input for clustername  
 
 CheckFilePathAndCreate		Function that is used in all Scripts for checking the specified filepath  
 Export-DatastoreProps		Exports the Overcommitment and VM# for each datastore to a csv file  

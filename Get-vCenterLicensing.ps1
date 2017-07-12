@@ -5,9 +5,9 @@
 .DESCRIPTION
   Creates a csv file with the vCenter Licensing information
 .NOTES
-  Release 1.1
+  Release 1.2
   Robert Ebneth
-  February, 14th, 2017
+  July, 12th, 2017
 .LINK
   http://github.com/rebneth/RobertEbneth.VMware.vSphere.Reporting
 .PARAMETER Filename
@@ -24,14 +24,19 @@ param(
     [string]$FILENAME = "$($env:USERPROFILE)\vCenterLicensing_$(get-date -f yyyy-MM-dd-HH-mm-ss).csv"
 )
 
-# Check and if not loaded add powershell snapin
-if (-not (Get-PSSnapin VMware.VimAutomation.Core -ErrorAction SilentlyContinue)) {
-	Add-PSSnapin VMware.VimAutomation.Core}
+########
+# Main #
+########
+
+# Check and if not loaded add powershell core module
+if ( !(Get-Module -Name VMware.VimAutomation.Core -ErrorAction SilentlyContinue) ) {
+    	Import-Module VMware.VimAutomation.Core
+}
 # We need the common function CheckFilePathAndCreate
 Get-Command "CheckFilePathAndCreate" -errorAction SilentlyContinue | Out-Null
 if ( $? -eq $false) {
     Write-Error "Function CheckFilePathAndCreate is missing."
-    break
+break
 } 
 $OUTPUTFILENAME = CheckFilePathAndCreate "$FILENAME"
 
@@ -47,8 +52,8 @@ $licMgr.Licenses | Select Name, CostUnit, LicenseKey, Total, Used | Sort Name | 
 # SIG # Begin signature block
 # MIIFmgYJKoZIhvcNAQcCoIIFizCCBYcCAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUNe+0js0UstpZjbDhfPgqfjfl
-# RpKgggMmMIIDIjCCAgqgAwIBAgIQPWSBWJqOxopPvpSTqq3wczANBgkqhkiG9w0B
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUPPckef0fFQKD+wBi0X2kNgts
+# thOgggMmMIIDIjCCAgqgAwIBAgIQPWSBWJqOxopPvpSTqq3wczANBgkqhkiG9w0B
 # AQUFADApMScwJQYDVQQDDB5Sb2JlcnRFYm5ldGhJVFN5c3RlbUNvbnN1bHRpbmcw
 # HhcNMTcwMjA0MTI0NjQ5WhcNMjIwMjA1MTI0NjQ5WjApMScwJQYDVQQDDB5Sb2Jl
 # cnRFYm5ldGhJVFN5c3RlbUNvbnN1bHRpbmcwggEiMA0GCSqGSIb3DQEBAQUAA4IB
@@ -68,11 +73,11 @@ $licMgr.Licenses | Select Name, CostUnit, LicenseKey, Total, Used | Sort Name | 
 # MIIB2gIBATA9MCkxJzAlBgNVBAMMHlJvYmVydEVibmV0aElUU3lzdGVtQ29uc3Vs
 # dGluZwIQPWSBWJqOxopPvpSTqq3wczAJBgUrDgMCGgUAoHgwGAYKKwYBBAGCNwIB
 # DDEKMAigAoAAoQKAADAZBgkqhkiG9w0BCQMxDAYKKwYBBAGCNwIBBDAcBgorBgEE
-# AYI3AgELMQ4wDAYKKwYBBAGCNwIBFTAjBgkqhkiG9w0BCQQxFgQU+tgkeu3GQ4Ed
-# +p0sozWok2uWLXMwDQYJKoZIhvcNAQEBBQAEggEADcsu/3jq9lKq6B/qVr+d8jF+
-# pv2ajSBNNiZI+KBpu0/hJUr8ZBVx7M1/hCWiLrAdosgCWZrxpGohRG676qSlPNzb
-# fUXSqQINmtjjVw8fNcLLWSZ/6jt0aWlZDJZNuQ5a6kKLlxcpeCHPsHI6BbapIkAF
-# XzvZknz+TgpQLhOrvC+P4VVhQ52luP/iprPCntXeHpeP4eLwxr8+LcC+EqBPiXfZ
-# 9kxVOJt+D3jhiEmuvkhUZO/qnt8skNdGv9JZ1GAnyMS0mLmIusyuhCwc2uX1K675
-# NpYhJTiJ0ggkrBDbKworGw2By1KNfR3VXkbaKcUcfcQ3QbL6MMaKiO5dFzP2Dg==
+# AYI3AgELMQ4wDAYKKwYBBAGCNwIBFTAjBgkqhkiG9w0BCQQxFgQUH9Zs28vLx1dO
+# LiCZyKmbrnKfbQMwDQYJKoZIhvcNAQEBBQAEggEART5tte30UujoVyE2S6143kuY
+# ja79tG7DjBPWmHRYKG8WVeGp1TGMPMn/B7GuNSc3vN9PB7/lezfvqcZkL2X7PhN6
+# SKuWaxOgVMbDTPfV9GPkC+cgrFSqLb+Q/ovTKdS0Fg5dHTprjQs1u3pODnVa/ASf
+# pv2anTGb7Aklraw4C39SPtKCSwDXp9rFEpMsHNwwfbl1K+fjDxtI2aitmFpbfotC
+# VDuJzU7cQ++G6JEI8EXEOHspSnRU0Hgd3dX6z4k6+T62zEToK9v+LPoBPV50scL+
+# xbqkibeDT0aXLv11PH2qoEejoTcSa8+eTfTFjOB+n2d5ezrIVsqs1OeYRFHBLw==
 # SIG # End signature block

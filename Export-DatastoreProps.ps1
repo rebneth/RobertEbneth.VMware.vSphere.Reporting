@@ -6,9 +6,9 @@ function Export-DatastoreProps {
   Creates a csv file with the properties of all datastores
   this covers Datastore, VMCount, Capacity, FreeSpace, CommittedPercent
 .NOTES
-  Release 1.1
+  Release 1.2
   Robert Ebneth
-  February, 14th, 2017
+  July, 12th, 2017
 .LINK
   http://github.com/rebneth/RobertEbneth.VMware.vSphere.Reporting
 .PARAMETER Filename
@@ -27,9 +27,10 @@ param(
 )
 
 Begin {
-	# Check and if not loaded add powershell snapin
-	if (-not (Get-PSSnapin VMware.VimAutomation.Core -ErrorAction SilentlyContinue)) {
-		Add-PSSnapin VMware.VimAutomation.Core}
+	# Check and if not loaded add powershell core module
+	if ( !(Get-Module -Name VMware.VimAutomation.Core -ErrorAction SilentlyContinue) ) {
+        	Import-Module VMware.VimAutomation.Core
+	}
 	# We need the common function CheckFilePathAndCreate
     Get-Command "CheckFilePathAndCreate" -errorAction SilentlyContinue | Out-Null
     if ( $? -eq $false) {
@@ -74,8 +75,8 @@ End {
 # SIG # Begin signature block
 # MIIFmgYJKoZIhvcNAQcCoIIFizCCBYcCAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUsCCJ0MekupqH3vSu5t1y++0A
-# wV6gggMmMIIDIjCCAgqgAwIBAgIQPWSBWJqOxopPvpSTqq3wczANBgkqhkiG9w0B
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQU8AGU7QzquHoIWSAUZXnH0zeY
+# qZigggMmMIIDIjCCAgqgAwIBAgIQPWSBWJqOxopPvpSTqq3wczANBgkqhkiG9w0B
 # AQUFADApMScwJQYDVQQDDB5Sb2JlcnRFYm5ldGhJVFN5c3RlbUNvbnN1bHRpbmcw
 # HhcNMTcwMjA0MTI0NjQ5WhcNMjIwMjA1MTI0NjQ5WjApMScwJQYDVQQDDB5Sb2Jl
 # cnRFYm5ldGhJVFN5c3RlbUNvbnN1bHRpbmcwggEiMA0GCSqGSIb3DQEBAQUAA4IB
@@ -95,11 +96,11 @@ End {
 # MIIB2gIBATA9MCkxJzAlBgNVBAMMHlJvYmVydEVibmV0aElUU3lzdGVtQ29uc3Vs
 # dGluZwIQPWSBWJqOxopPvpSTqq3wczAJBgUrDgMCGgUAoHgwGAYKKwYBBAGCNwIB
 # DDEKMAigAoAAoQKAADAZBgkqhkiG9w0BCQMxDAYKKwYBBAGCNwIBBDAcBgorBgEE
-# AYI3AgELMQ4wDAYKKwYBBAGCNwIBFTAjBgkqhkiG9w0BCQQxFgQUs09UmRzhnqNA
-# UYcm66r5WSkjIW4wDQYJKoZIhvcNAQEBBQAEggEAgxTenNmsfNw5WeuwR9/GOhJv
-# MemPJHUzM1zP8h4OmkvOOP76MOiMFM1esQuEaZ8lXDfuRgmfn9vGBzND4d/TOhx8
-# tkQ6Eta0trKANjy8kX4OFThosteKVK7UC+mqYipEMzyTmJkV8Jc63HXYUYNVQlMz
-# whTFxcPh+/isGv52tBCJX2ia1qj6B8Nu5R73UDY/P17qWe0QABl8a5hbM0XatQKm
-# e0n+Z2iFwBbWkw9jnbYVSGc+Zyn5d9pauuLTL3UoFn/ygwPxuQFjK6vZOEl0vX/R
-# tjXvaZiVSsUpHmqnIZ3bCrQuSY/YctrpL+agd9k2s/+IB1e+S3zgKljlKoi9MA==
+# AYI3AgELMQ4wDAYKKwYBBAGCNwIBFTAjBgkqhkiG9w0BCQQxFgQUYo7WnKh7jIoH
+# i83DCxF5gqBOggowDQYJKoZIhvcNAQEBBQAEggEAmDUH0J+cPsP9VKGXEWfLshgP
+# MYTxki1OG5uC/1kjiTR/P4ElLsv/B3MVuIREjIeQoaKsBIAaKM94nwNTZW6i710l
+# 48HXwbeM9xZLxYHc1WXNrRPIcAuaFzFezHHY8JgCdbOVblFtUKVYV17aK5KzRJfG
+# ytOBC2oge7hwTQbWSUXqxIZU75WBnhgLwuQ9ADPVmHrcwkrCjByrtwtF9KM27EmJ
+# PU1aGrkOB1wFZ36wlGBSN9Ar1Titw+7K6coSedXLyJ6XL/oB1IwgmE/CkqKIOuRR
+# GMFMrltl6tJjm9OTI3u1tq5s5KgkcG1miCSQo2jekM7zso4Q5bf22fc8UocX+w==
 # SIG # End signature block
